@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="AppTheme"
+        parent="AppTheme.Base"/>
+
+    <style name="AppTheme.Base"
+        parent="Theme.AppCompat.Light.NoActionBar">
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="android:windowBackground">@color/white</item>
+
+        <!--<item name="android:textColorPrimary">@color/theme_primary_text</item>-->
+        <!--<item name="android:textColorSecondary">@color/theme_secondary_text</item>-->
+
+        <!--<item name="android:divider">@color/theme_divider</item>-->
+        <!--<item name="android:icon">@color/theme_icons</item>-->
+
+        <item name="alertDialogTheme">@style/AlertDialogStyle</item>
+    </style>
+
+    <style name="ToolbarStyle"
+        parent="Theme.AppCompat">
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+
+        <item name="actionMenuTextColor">@color/white</item>
+    </style>
+
+    <style name="AlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/colorPrimary</item>
+        <!-- Used for the title and text -->
+        <!--<item name="android:textColorPrimary">#FFFFFF</item>-->
+    </style>
+
+</resources>
