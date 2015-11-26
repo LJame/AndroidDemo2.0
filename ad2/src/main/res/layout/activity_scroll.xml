@@ -23,17 +23,29 @@
             android:gravity="center"
             android:background="@color/colorPrimary"
             android:textColor="@color/white"
-            android:text="scroll方法"/>
-        <LinearLayout
+            android:text="scroll直接移动"/>
+        <TextView
+            android:id="@+id/tv_scroll_smooth_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:padding="5dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white"
+            android:text="scroll平滑移动"/>
+        <com.hardrubic.myview.ScrollLinearLayout
             android:id="@+id/tv_scroll_target"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 android:background="@color/red"/>
-        </LinearLayout>
+        </com.hardrubic.myview.ScrollLinearLayout>
     </LinearLayout>
     <LinearLayout
         android:layout_width="0dp"
