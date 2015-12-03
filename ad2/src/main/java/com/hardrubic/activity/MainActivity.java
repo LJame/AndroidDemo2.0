@@ -18,14 +18,19 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
 
     private void initView() {
         findViewById(R.id.tv_three_scroll).setOnClickListener(this);
+        findViewById(R.id.tv_horizontal_scroll).setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.tv_three_scroll:
-                Intent intent = new Intent(this, ScrollActivity.class);
-                startActivity(intent);
+                Intent intent1 = new Intent(this, ScrollActivity.class);
+                startActivity(intent1);
+                break;
+            case R.id.tv_horizontal_scroll:
+                Intent intent2 = new Intent(this, HorizontalScrollActivity.class);
+                startActivity(intent2);
                 break;
         }
     }
