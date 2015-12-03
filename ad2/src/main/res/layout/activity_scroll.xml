@@ -63,7 +63,7 @@
             android:gravity="center"
             android:background="@color/colorPrimary"
             android:textColor="@color/white"
-            android:text="动画"/>
+            android:text="属性动画"/>
         <TextView
             android:id="@+id/tv_animator_target"
             android:layout_width="match_parent"
@@ -87,7 +87,7 @@
             android:gravity="center"
             android:background="@color/colorPrimary"
             android:textColor="@color/white"
-            android:text="LayoutParam"/>
+            android:text="改变LayoutParam"/>
         <TextView
             android:id="@+id/tv_lp_target"
             android:layout_width="match_parent"
