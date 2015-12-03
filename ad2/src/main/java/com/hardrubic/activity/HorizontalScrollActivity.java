@@ -1,20 +1,27 @@
 package com.hardrubic.activity;
 
-import ad2.hardrubic.com.androiddemo20.R;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.widget.CardView;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.HorizontalScrollView;
 import android.widget.ListView;
+import android.widget.Toast;
+
 import com.hardrubic.adapter.AreaAdapter;
 import com.hardrubic.entity.Area;
 import com.hardrubic.util.ScreenUtils;
 import com.hardrubic.util.ViewUtil;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import ad2.hardrubic.com.androiddemo20.R;
 
 public class HorizontalScrollActivity extends TitleActivity {
 
@@ -44,6 +51,18 @@ public class HorizontalScrollActivity extends TitleActivity {
     ListView mLvRegion;
     ListView mLvStreet;
 
+    Handler mHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 1:
+                    Log.d("test", "触发滑动");
+                    mLayoutMain.smoothScrollTo(msg.arg1, 0);
+                    break;
+            }
+            super.handleMessage(msg);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,13 +87,6 @@ public class HorizontalScrollActivity extends TitleActivity {
         }
     }
 
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_UP) {
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
     private void initView() {
         //初始化
         final int screenWidth = ScreenUtils.getScreenWidthPixels(mContext);
@@ -82,6 +94,9 @@ public class HorizontalScrollActivity extends TitleActivity {
         ViewUtil.setWidth(mCardCity, (int) (screenWidth * 0.5));
         ViewUtil.setWidth(mCardRegion, (int) (screenWidth * 0.5));
         ViewUtil.setWidth(mCardStreet, (int) (screenWidth * 0.5));
+        if (mLastAreaType == PROVINCE) {
+            ViewUtil.setWidth(mCardProvince, screenWidth);
+        }
         if (mLastAreaType == CITY) {
             mCardCity.setVisibility(View.VISIBLE);
         }
@@ -99,25 +114,87 @@ public class HorizontalScrollActivity extends TitleActivity {
         mLvProvince.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (mLastAreaType == PROVINCE) {
+                    Toast.makeText(mContext, "选择了省：" + mProvinceList.get(position).getName(), Toast.LENGTH_LONG).show();
+                    return;
+                }
                 switchProvince(mProvinceList.get(position).getAreaid());
-                mLayoutMain.scrollTo(0, 0);
             }
         });
         mLvCity.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (mLastAreaType == CITY) {
+                    Toast.makeText(mContext, "选择了市：" + mCityList.get(position).getName(), Toast.LENGTH_LONG).show();
+                    return;
+                }
                 switchCity(mCityList.get(position).getAreaid());
-                mLayoutMain.scrollTo(scrollWidth / mLastAreaType, 0);
+                if (mCurrentAreaType == PROVINCE) {
+                    Message message = new Message();
+                    message.what = 1;
+                    message.arg1 = scrollWidth / mLastAreaType;
+                    mHandler.sendMessageDelayed(message, 100);
+                    mCurrentAreaType = CITY;
+                    updateTitle();
+                }
             }
         });
         mLvRegion.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (mLastAreaType == REGION) {
+                    Toast.makeText(mContext, "选择了县区：" + mRegionList.get(position).getName(), Toast.LENGTH_LONG).show();
+                    return;
+                }
                 switchRegion(mRegionList.get(position).getAreaid());
-                mLayoutMain.scrollTo(scrollWidth / mLastAreaType * 2, 0);
+                if (mCurrentAreaType == CITY) {
+                    Message message = new Message();
+                    message.what = 1;
+                    message.arg1 = scrollWidth / mLastAreaType * 2;
+                    mHandler.sendMessageDelayed(message, 100);
+                    mCurrentAreaType = REGION;
+                    updateTitle();
+                }
+            }
+        });
+        mLvStreet.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(mContext, "选择了街道：" + mStreetList.get(position).getName(), Toast.LENGTH_LONG).show();
             }
         });
 
+        //监听滑动
+        mLayoutMain.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    int x = mLayoutMain.getScrollX();
+                    //Log.d("test", "滑动记录：" + x);
+                    Message message = new Message();
+                    message.what = 1;
+                    if (x < screenWidth / 4) {
+                        message.arg1 = 0;
+                        mHandler.sendMessageDelayed(message, 100);
+                        mCurrentAreaType = PROVINCE;
+                        updateTitle();
+                    } else if (x >= screenWidth / 4 && x < screenWidth * 3 / 4) {
+                        message.arg1 = scrollWidth / mLastAreaType;
+                        mHandler.sendMessageDelayed(message, 100);
+                        mCurrentAreaType = CITY;
+                        updateTitle();
+                    } else if (x >= screenWidth * 3 / 4) {
+                        message.arg1 = scrollWidth / mLastAreaType * 2;
+                        mHandler.sendMessageDelayed(message, 100);
+                        mCurrentAreaType = REGION;
+                        updateTitle();
+                    }
+                }
+                return false;
+            }
+        });
+
+        //省
         findProvinceList();
         AreaAdapter provinceAdapter = new AreaAdapter(mContext, R.layout.item_area, mProvinceList);
         mLvProvince.setAdapter(provinceAdapter);
