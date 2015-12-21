@@ -19,6 +19,10 @@
         <activity
             android:name="com.hardrubic.activity.HorizontalScrollActivity">
         </activity>
+
+        <service
+            android:name="com.hardrubic.service.RemoteService"
+            android:process=":remote"></service>
     </application>
 
 </manifest>

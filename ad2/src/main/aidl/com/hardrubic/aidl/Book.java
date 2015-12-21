@@ -7,7 +7,13 @@ public class Book implements Parcelable{
     private Long id;
     private String name;
 
-    protected Book(Parcel in) {
+    public Book(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public Book(Parcel in) {
+        id = in.readLong();
         name = in.readString();
     }
 
