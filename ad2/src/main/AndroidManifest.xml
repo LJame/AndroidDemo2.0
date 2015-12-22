@@ -11,18 +11,24 @@
         <activity android:name="com.hardrubic.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
         <activity android:name="com.hardrubic.activity.ScrollActivity">
         </activity>
-        <activity
-            android:name="com.hardrubic.activity.HorizontalScrollActivity">
+        <activity android:name="com.hardrubic.activity.HorizontalScrollActivity">
         </activity>
 
         <service
             android:name="com.hardrubic.service.RemoteService"
-            android:process=":remote"></service>
+            android:process=":remote"/>
+
+        <activity
+            android:name="com.hardrubic.activity.AidlActivity"
+            android:label="@string/title_activity_aidl"
+            android:theme="@style/AppTheme">
+        </activity>
     </application>
 
 </manifest>

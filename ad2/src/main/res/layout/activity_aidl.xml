@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical">
-
     <TextView
-        android:id="@+id/tv_three_scroll"
+        android:id="@+id/tv_remote_book_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -18,10 +16,9 @@
         android:background="@color/colorPrimary"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:text="三种滑动"/>
-
+        android:text="调用远程服务获取书籍列表"/>
     <TextView
-        android:id="@+id/tv_horizontal_scroll"
+        android:id="@+id/tv_remote_add_book"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -32,10 +29,9 @@
         android:background="@color/colorPrimary"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:text="自定义横向滑动"/>
-
+        android:text="调用远程服务增加一本书"/>
     <TextView
-        android:id="@+id/tv_aidl"
+        android:id="@+id/tv_register"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -46,5 +42,18 @@
         android:background="@color/colorPrimary"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:text="AIDL"/>
+        android:text="注册监听"/>
+    <TextView
+        android:id="@+id/tv_unregister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:gravity="center"
+        android:background="@color/colorPrimary"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:text="解除注册监听"/>
 </LinearLayout>
