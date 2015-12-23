@@ -21,7 +21,7 @@
         </activity>
 
         <service
-            android:name="com.hardrubic.service.RemoteService"
+            android:name="com.hardrubic.remote.service.RemoteService"
             android:process=":remote"/>
 
         <activity
