@@ -7,7 +7,7 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/tv_three_scroll"
+        android:id="@+id/tv_cyclic_barrier"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -18,10 +18,10 @@
         android:background="@color/colorPrimary"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:text="三种滑动"/>
+        android:text="CyclicBarrier"/>
 
     <TextView
-        android:id="@+id/tv_horizontal_scroll"
+        android:id="@+id/tv_count_down_latch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -32,10 +32,10 @@
         android:background="@color/colorPrimary"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:text="自定义横向滑动"/>
+        android:text="CountDownLatch"/>
 
     <TextView
-        android:id="@+id/tv_aidl"
+        android:id="@+id/tv_semaphore"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -46,33 +46,6 @@
         android:background="@color/colorPrimary"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:text="AIDL"/>
+        android:text="Semaphore"/>
 
-    <TextView
-        android:id="@+id/tv_recycle_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:gravity="center"
-        android:background="@color/colorPrimary"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:text="RecycleView"/>
-
-    <TextView
-        android:id="@+id/tv_thread"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:gravity="center"
-        android:background="@color/colorPrimary"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:text="并发"/>
 </LinearLayout>
