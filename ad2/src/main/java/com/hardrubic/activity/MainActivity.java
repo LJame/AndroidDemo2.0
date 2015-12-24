@@ -1,9 +1,10 @@
 package com.hardrubic.activity;
 
-import ad2.hardrubic.com.androiddemo20.R;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+
+import ad2.hardrubic.com.androiddemo20.R;
 
 public class MainActivity extends TitleActivity implements View.OnClickListener {
 
@@ -20,6 +21,7 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         findViewById(R.id.tv_three_scroll).setOnClickListener(this);
         findViewById(R.id.tv_horizontal_scroll).setOnClickListener(this);
         findViewById(R.id.tv_aidl).setOnClickListener(this);
+        findViewById(R.id.tv_recycle_view).setOnClickListener(this);
     }
 
     @Override
@@ -36,6 +38,10 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
             case R.id.tv_aidl:
                 Intent intent3 = new Intent(this, AidlActivity.class);
                 startActivity(intent3);
+                break;
+            case R.id.tv_recycle_view:
+                Intent intent4 = new Intent(this, RecyclerViewActivity.class);
+                startActivity(intent4);
                 break;
         }
     }

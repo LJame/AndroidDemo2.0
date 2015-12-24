@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="ad2.hardrubic.com.androiddemo20">
+<manifest package="ad2.hardrubic.com.androiddemo20"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:allowBackup="true"
@@ -28,6 +28,8 @@
             android:name="com.hardrubic.activity.AidlActivity"
             android:label="@string/title_activity_aidl"
             android:theme="@style/AppTheme">
+        </activity>
+        <activity android:name="com.hardrubic.activity.RecyclerViewActivity">
         </activity>
     </application>
 
