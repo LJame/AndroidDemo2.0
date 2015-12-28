@@ -23,6 +23,7 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         findViewById(R.id.tv_aidl).setOnClickListener(this);
         findViewById(R.id.tv_recycle_view).setOnClickListener(this);
         findViewById(R.id.tv_thread).setOnClickListener(this);
+        findViewById(R.id.tv_custom_view).setOnClickListener(this);
     }
 
     @Override
@@ -47,6 +48,10 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
             case R.id.tv_thread:
                 Intent intent5 = new Intent(this, ThreadTestActivity.class);
                 startActivity(intent5);
+                break;
+            case R.id.tv_custom_view:
+                Intent intent6 = new Intent(this, CustomViewActivity.class);
+                startActivity(intent6);
                 break;
         }
     }
