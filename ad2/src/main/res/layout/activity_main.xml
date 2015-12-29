@@ -76,17 +76,37 @@
         android:textSize="24sp"
         android:text="并发"/>
 
-    <TextView
-        android:id="@+id/tv_custom_view"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:gravity="center"
-        android:background="@color/colorPrimary"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:text="自定义View"/>
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/tv_custom_view"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:text="自定义View"/>
+        <TextView
+            android:id="@+id/tv_custom_view_group"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:layout_marginLeft="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:text="自定义ViewGroup"/>
+    </LinearLayout>
+
 </LinearLayout>

@@ -36,6 +36,8 @@
             android:name="com.hardrubic.activity.CustomViewActivity"
             android:theme="@style/AppTheme">
         </activity>
+        <activity android:name="com.hardrubic.activity.CustomViewGroupActivity">
+        </activity>
     </application>
 
 </manifest>
