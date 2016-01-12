@@ -1,1 +1,1 @@
-include ':ad2', ':library', ':swipemenulistview', ':swipe_menu_list_view'
+include ':ad2', ':swipe_menu_list_view'

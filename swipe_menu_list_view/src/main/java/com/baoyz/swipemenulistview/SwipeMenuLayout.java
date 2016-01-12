@@ -344,4 +344,23 @@ public class SwipeMenuLayout extends FrameLayout {
 	public boolean getSwipEnable(){
 		return mSwipEnable;
 	}
+
+	/*********** 实现ExpandableListView左划功能 start ***************/
+	private int groupPosition;
+	private int childPosition;
+
+	public int getGroupPosition() {
+		return groupPosition;
+	}
+
+	public int getChildPosition() {
+		return childPosition;
+	}
+
+	public void setPositions(int groupPosition, int childPosition) {
+		this.groupPosition = groupPosition;
+		this.childPosition = childPosition;
+		mMenuView.setPositions(groupPosition, childPosition);
+	}
+	/*************************** end *******************************/
 }

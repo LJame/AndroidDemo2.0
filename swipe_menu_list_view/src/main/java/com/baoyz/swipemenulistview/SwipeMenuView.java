@@ -1,5 +1,6 @@
 package com.baoyz.swipemenulistview;
 
+import com.baoyz.swipemenuexpandablelistview.SwipeMenuExpandableListView;
 import java.util.List;
 
 import android.text.TextUtils;
@@ -85,6 +86,54 @@ public class SwipeMenuView extends LinearLayout implements OnClickListener {
 			onItemClickListener.onItemClick(this, mMenu, v.getId());
 		}
 	}
+
+	/*********** 实现ExpandableListView左划功能 start ***************/
+	private SwipeMenuExpandableListView mExpandableListView;
+
+	public SwipeMenuView(SwipeMenu menu,
+						 SwipeMenuExpandableListView expandableListView) {
+		super(menu.getContext());
+		mExpandableListView = expandableListView;
+		mMenu = menu;
+		List<SwipeMenuItem> items = menu.getMenuItems();
+		int id = 0;
+		for (SwipeMenuItem item : items) {
+			addItem(item, id++);
+		}
+	}
+
+	private OnExpandableSwipeItemClickListener onExpandableSwipeItemClickListener;
+
+	public OnExpandableSwipeItemClickListener getOnExpandableSwipeItemClickListener() {
+		return onExpandableSwipeItemClickListener;
+	}
+
+	public void setOnExpandableSwipeItemClickListener(
+			OnExpandableSwipeItemClickListener onExpandableSwipeItemClickListener) {
+		this.onExpandableSwipeItemClickListener = onExpandableSwipeItemClickListener;
+	}
+
+	public static interface OnExpandableSwipeItemClickListener {
+		void onExpandableItemClick(SwipeMenuView view, SwipeMenu menu, int index);
+	}
+
+	private int groupPosition;
+	private int childPosition;
+
+	public int getGroupPostion() {
+		return groupPosition;
+	}
+
+	public int getChildPosition() {
+		return childPosition;
+	}
+
+	public void setPositions(int groupPosition, int childPosition) {
+		this.groupPosition = groupPosition;
+		this.childPosition = childPosition;
+	}
+
+	/*************************** end *******************************/
 
 	public OnSwipeItemClickListener getOnSwipeItemClickListener() {
 		return onItemClickListener;

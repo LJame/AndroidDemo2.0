@@ -3,6 +3,7 @@ package com.hardrubic.activity;
 import ad2.hardrubic.com.androiddemo20.R;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
@@ -12,38 +13,30 @@ import com.hardrubic.util.ToastUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SwipeMenuActivity extends TitleActivity {
+public class ListViewSwipeActivity extends TitleActivity {
 
     private Context mContext;
+    private List<String> mDataList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_swipe_menu);
+        setContentView(R.layout.activity_listview_swipe);
         mContext = this;
 
+        initData();
         initView();
     }
 
-    private void initView() {
-        List<String> dataList = new ArrayList<>();
-        dataList.add("1");
-        dataList.add("2");
-        dataList.add("3");
-        dataList.add("4");
-        dataList.add("5");
-        dataList.add("6");
-        dataList.add("7");
-        dataList.add("8");
-        dataList.add("9");
-        dataList.add("10");
-        dataList.add("11");
-        dataList.add("12");
-        dataList.add("13");
-        dataList.add("14");
-        dataList.add("15");
+    private void initData(){
+        for (int i = 0; i < 20; i++) {
+            mDataList.add(""+i);
+        }
+    }
 
+    private void initView() {
         SwipeMenuListView listView = (SwipeMenuListView) findViewById(R.id.lv_list);
+        listView.setVisibility(View.VISIBLE);
         listView.setMenuCreator(new SwipeMenuCreator() {
             @Override
             public void create(SwipeMenu menu) {
@@ -67,7 +60,7 @@ public class SwipeMenuActivity extends TitleActivity {
                 return false;
             }
         });
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, dataList);
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, mDataList);
         listView.setAdapter(adapter);
     }
 }

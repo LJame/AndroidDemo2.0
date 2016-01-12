@@ -38,7 +38,9 @@
         </activity>
         <activity android:name="com.hardrubic.activity.CustomViewGroupActivity">
         </activity>
-        <activity android:name="com.hardrubic.activity.SwipeMenuActivity">
+        <activity android:name="com.hardrubic.activity.ListViewSwipeActivity">
+        </activity>
+        <activity android:name="com.hardrubic.activity.ExpandableListViewSwipeActivity">
         </activity>
     </application>
 

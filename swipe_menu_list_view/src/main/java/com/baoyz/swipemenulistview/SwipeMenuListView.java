@@ -1,7 +1,6 @@
 package com.baoyz.swipemenulistview;
 
 import android.content.Context;
-import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.MotionEvent;
@@ -11,8 +10,8 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 
 /**
- * @author baoyz
- * @date 2014-8-18
+ * https://github.com/baoyongzhang/SwipeMenuListView
+ * version:1.3.0
  */
 public class SwipeMenuListView extends ListView {
 
