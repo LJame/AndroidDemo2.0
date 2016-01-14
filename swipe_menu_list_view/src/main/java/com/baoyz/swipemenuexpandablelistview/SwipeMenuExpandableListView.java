@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
-import com.baoyz.swipemenuexpandablelistview.test.SwipeMenuExpandableAdapter;
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
 import com.baoyz.swipemenulistview.SwipeMenuLayout;

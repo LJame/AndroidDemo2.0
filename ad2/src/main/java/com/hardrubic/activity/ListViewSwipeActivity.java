@@ -51,13 +51,13 @@ public class ListViewSwipeActivity extends TitleActivity {
         });
         listView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+            public void onMenuItemClick(int position, SwipeMenu menu, int index) {
                 switch (index) {
                     case 0:
                         ToastUtil.longShow(mContext, "删除");
                         break;
                 }
-                return false;
+                //return false;
             }
         });
         ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, mDataList);

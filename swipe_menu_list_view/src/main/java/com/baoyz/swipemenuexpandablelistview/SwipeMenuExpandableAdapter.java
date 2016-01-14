@@ -1,4 +1,4 @@
-package com.baoyz.swipemenuexpandablelistview.test;
+package com.baoyz.swipemenuexpandablelistview;
 
 import android.content.Context;
 import android.database.DataSetObserver;

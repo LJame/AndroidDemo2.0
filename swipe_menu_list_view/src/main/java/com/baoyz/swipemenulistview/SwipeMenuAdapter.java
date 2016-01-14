@@ -49,7 +49,7 @@ public class SwipeMenuAdapter implements WrapperListAdapter,
         if (convertView == null) {
             View contentView = mAdapter.getView(position, convertView, parent);
             SwipeMenu menu = new SwipeMenu(mContext);
-            menu.setViewType(getItemViewType(position));
+            menu.setViewType(mAdapter.getItemViewType(position));
             createMenu(menu);
             SwipeMenuView menuView = new SwipeMenuView(menu,
                     (SwipeMenuListView) parent);
@@ -65,10 +65,6 @@ public class SwipeMenuAdapter implements WrapperListAdapter,
             layout.setPosition(position);
             View view = mAdapter.getView(position, layout.getContentView(),
                     parent);
-        }
-        if (mAdapter instanceof BaseSwipListAdapter) {
-            boolean swipEnable = (((BaseSwipListAdapter) mAdapter).getSwipEnableByPosition(position));
-            layout.setSwipEnable(swipEnable);
         }
         return layout;
     }
@@ -96,7 +92,7 @@ public class SwipeMenuAdapter implements WrapperListAdapter,
         }
     }
 
-    public void setOnSwipeItemClickListener(
+    public void setOnMenuItemClickListener(
             SwipeMenuListView.OnMenuItemClickListener onMenuItemClickListener) {
         this.onMenuItemClickListener = onMenuItemClickListener;
     }
