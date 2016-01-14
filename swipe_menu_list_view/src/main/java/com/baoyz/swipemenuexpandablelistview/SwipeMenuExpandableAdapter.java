@@ -8,12 +8,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListAdapter;
-import com.baoyz.swipemenuexpandablelistview.SwipeMenuExpandableListView;
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuLayout;
 import com.baoyz.swipemenulistview.SwipeMenuView;
 
+/**
+ * 复制SwipeMenuAdapter修改
+ */
 public class SwipeMenuExpandableAdapter extends BaseExpandableListAdapter
         implements SwipeMenuView.OnExpandableSwipeItemClickListener {
 

@@ -49,12 +49,13 @@ public class ExpandableListViewSwipeActivity extends TitleActivity {
         });
         expandableListView.setOnExpandableMenuItemClickListener(new SwipeMenuExpandableListView.OnExpandableMenuItemClickListener() {
             @Override
-            public void onExpandableMenuItemClick(int groupPosition, int childPosition, SwipeMenu menu, int index) {
+            public boolean onExpandableMenuItemClick(int groupPosition, int childPosition, SwipeMenu menu, int index) {
                 switch (index) {
                     case 0:
                         ToastUtil.longShow(mContext, "删除" + childList.get(groupPosition).get(childPosition));
                         break;
                 }
+                return false;
             }
         });
         CustomExpandableListAdapter adapter = new CustomExpandableListAdapter();

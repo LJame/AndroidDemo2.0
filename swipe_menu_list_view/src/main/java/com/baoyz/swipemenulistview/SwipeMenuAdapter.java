@@ -10,12 +10,6 @@ import android.widget.ListAdapter;
 import android.widget.WrapperListAdapter;
 import com.baoyz.swipemenulistview.SwipeMenuView.OnSwipeItemClickListener;
 
-/**
- * 
- * @author baoyz
- * @date 2014-8-24
- * 
- */
 public class SwipeMenuAdapter implements WrapperListAdapter,
 		OnSwipeItemClickListener {
 
@@ -49,7 +43,7 @@ public class SwipeMenuAdapter implements WrapperListAdapter,
         if (convertView == null) {
             View contentView = mAdapter.getView(position, convertView, parent);
             SwipeMenu menu = new SwipeMenu(mContext);
-            menu.setViewType(mAdapter.getItemViewType(position));
+            menu.setViewType(getItemViewType(position));
             createMenu(menu);
             SwipeMenuView menuView = new SwipeMenuView(menu,
                     (SwipeMenuListView) parent);
@@ -65,6 +59,10 @@ public class SwipeMenuAdapter implements WrapperListAdapter,
             layout.setPosition(position);
             View view = mAdapter.getView(position, layout.getContentView(),
                     parent);
+        }
+        if (mAdapter instanceof BaseSwipListAdapter) {
+            boolean swipEnable = (((BaseSwipListAdapter) mAdapter).getSwipEnableByPosition(position));
+            layout.setSwipEnable(swipEnable);
         }
         return layout;
     }
@@ -92,7 +90,7 @@ public class SwipeMenuAdapter implements WrapperListAdapter,
         }
     }
 
-    public void setOnMenuItemClickListener(
+    public void setOnSwipeItemClickListener(
             SwipeMenuListView.OnMenuItemClickListener onMenuItemClickListener) {
         this.onMenuItemClickListener = onMenuItemClickListener;
     }
