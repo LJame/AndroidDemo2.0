@@ -1,8 +1,5 @@
 package com.baoyz.swipemenulistview;
 
-import com.baoyz.swipemenuexpandablelistview.SwipeMenuExpandableListView;
-import java.util.List;
-
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
@@ -10,16 +7,13 @@ import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import com.baoyz.swipemenuexpandablelistview.SwipeMenuExpandableListView;
+import java.util.List;
 
-/**
- * 
- * @author baoyz
- * @date 2014-8-23
- * 
- */
 public class SwipeMenuView extends LinearLayout implements OnClickListener {
 
 	private SwipeMenuListView mListView;
+
 	private SwipeMenuLayout mLayout;
 	private SwipeMenu mMenu;
 	private OnSwipeItemClickListener onItemClickListener;
@@ -85,6 +79,10 @@ public class SwipeMenuView extends LinearLayout implements OnClickListener {
 		if (onItemClickListener != null && mLayout.isOpen()) {
 			onItemClickListener.onItemClick(this, mMenu, v.getId());
 		}
+		if (onExpandableSwipeItemClickListener != null && mLayout.isOpen()) {
+			onExpandableSwipeItemClickListener.onExpandableItemClick(this,
+					mMenu, v.getId());
+		}
 	}
 
 	/*********** 实现ExpandableListView左划功能 start ***************/
@@ -139,7 +137,8 @@ public class SwipeMenuView extends LinearLayout implements OnClickListener {
 		return onItemClickListener;
 	}
 
-	public void setOnSwipeItemClickListener(OnSwipeItemClickListener onItemClickListener) {
+	public void setOnSwipeItemClickListener(
+			OnSwipeItemClickListener onItemClickListener) {
 		this.onItemClickListener = onItemClickListener;
 	}
 

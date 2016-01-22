@@ -10,12 +10,6 @@ import android.widget.ListAdapter;
 import android.widget.WrapperListAdapter;
 import com.baoyz.swipemenulistview.SwipeMenuView.OnSwipeItemClickListener;
 
-/**
- * 
- * @author baoyz
- * @date 2014-8-24
- * 
- */
 public class SwipeMenuAdapter implements WrapperListAdapter,
 		OnSwipeItemClickListener {
 
