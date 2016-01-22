@@ -22,7 +22,6 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         findViewById(R.id.tv_horizontal_scroll).setOnClickListener(this);
         findViewById(R.id.tv_aidl).setOnClickListener(this);
         findViewById(R.id.tv_recycle_view).setOnClickListener(this);
-        findViewById(R.id.tv_thread).setOnClickListener(this);
         findViewById(R.id.tv_custom_view).setOnClickListener(this);
         findViewById(R.id.tv_custom_view_group).setOnClickListener(this);
         findViewById(R.id.tv_listview_swipe).setOnClickListener(this);
@@ -47,10 +46,6 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
             case R.id.tv_recycle_view:
                 Intent intent4 = new Intent(this, RecyclerViewActivity.class);
                 startActivity(intent4);
-                break;
-            case R.id.tv_thread:
-                Intent intent5 = new Intent(this, ThreadTestActivity.class);
-                startActivity(intent5);
                 break;
             case R.id.tv_custom_view:
                 Intent intent6 = new Intent(this, CustomViewActivity.class);

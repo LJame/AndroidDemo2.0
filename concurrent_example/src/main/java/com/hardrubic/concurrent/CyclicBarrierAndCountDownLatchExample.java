@@ -1,14 +1,12 @@
-package com.hardrubic.thread;
+package com.hardrubic.concurrent;
 
-
-import com.hardrubic.util.LogUtils;
 
 import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
-public class TestCyclicBarrierAndCountDownLatch {
+public class CyclicBarrierAndCountDownLatchExample {
 
     /**
      * CyclicBarrier
@@ -20,7 +18,7 @@ public class TestCyclicBarrierAndCountDownLatch {
         final CyclicBarrier cyclicBarrier = new CyclicBarrier(10, new Runnable() {
             @Override
             public void run() {
-                LogUtils.d("所有线程通过栅栏");
+                System.out.println("所有线程通过栅栏");
             }
         });
 
@@ -29,14 +27,14 @@ public class TestCyclicBarrierAndCountDownLatch {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    LogUtils.d("线程" + finalI + "启动");
+                    System.out.println("线程" + finalI + "启动");
                     Random random = new Random();
                     try {
                         Thread.sleep(random.nextInt(10000) + 1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    LogUtils.d("线程" + finalI + "完毕");
+                    System.out.println("线程" + finalI + "完毕");
 
                     //通知barrier已完成
                     try {
@@ -47,7 +45,7 @@ public class TestCyclicBarrierAndCountDownLatch {
                         e.printStackTrace();
                     }
 
-                    LogUtils.d("线程" + finalI + "继续往前");
+                    System.out.println("线程" + finalI + "继续往前");
                 }
             }).start();
         }
@@ -60,24 +58,22 @@ public class TestCyclicBarrierAndCountDownLatch {
      * 国家等各个省对数据进行汇总后，再全国汇总
      */
     public void startTestCountDownLatch() {
-        final CountDownLatch countDownLatch = new CountDownLatch(10);
+        int threadNum = 10;
+        final CountDownLatch countDownLatch = new CountDownLatch(threadNum);
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < threadNum; i++) {
             final int finalI = i + 1;
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    LogUtils.d("线程" + finalI + "启动");
-                    Random random = new Random();
-                    try {
-                        Thread.sleep(random.nextInt(10000) + 1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    LogUtils.d("线程" + finalI + "完毕");
-
-                    countDownLatch.countDown();
+            new Thread(() -> {
+                System.out.println("thread " + finalI + " start");
+                Random random = new Random();
+                try {
+                    Thread.sleep(random.nextInt(10000) + 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+                System.out.println("thread " + finalI + " finish");
+
+                countDownLatch.countDown();
             }).start();
         }
 
@@ -87,6 +83,6 @@ public class TestCyclicBarrierAndCountDownLatch {
             e.printStackTrace();
         }
 
-        LogUtils.d("10个线程执行完毕");
+        System.out.println(threadNum + " thread finish");
     }
 }

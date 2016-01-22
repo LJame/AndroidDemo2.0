@@ -30,8 +30,6 @@
         </activity>
         <activity android:name="com.hardrubic.activity.RecyclerViewActivity">
         </activity>
-        <activity android:name="com.hardrubic.activity.ThreadTestActivity">
-        </activity>
         <activity
             android:name="com.hardrubic.activity.CustomViewActivity"
             android:theme="@style/AppTheme">
