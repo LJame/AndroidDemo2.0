@@ -26,6 +26,7 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         findViewById(R.id.tv_custom_view_group).setOnClickListener(this);
         findViewById(R.id.tv_listview_swipe).setOnClickListener(this);
         findViewById(R.id.tv_ExpandableListView_swipe).setOnClickListener(this);
+        findViewById(R.id.tv_js_bridge).setOnClickListener(this);
     }
 
     @Override
@@ -62,6 +63,10 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
             case R.id.tv_ExpandableListView_swipe:
                 Intent intent9 = new Intent(this, ExpandableListViewSwipeActivity.class);
                 startActivity(intent9);
+                break;
+            case R.id.tv_js_bridge:
+                Intent intent10 = new Intent(this, JsTestActivity.class);
+                startActivity(intent10);
                 break;
         }
     }

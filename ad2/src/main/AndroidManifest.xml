@@ -40,6 +40,8 @@
         </activity>
         <activity android:name="com.hardrubic.activity.ExpandableListViewSwipeActivity">
         </activity>
+        <activity android:name="com.hardrubic.activity.JsTestActivity">
+        </activity>
     </application>
 
 </manifest>
