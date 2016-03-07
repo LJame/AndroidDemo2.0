@@ -26,6 +26,7 @@ android {
             aidl.srcDirs = ['src/main/aidl']
             res.srcDirs = ['src/main/res']
             assets.srcDirs = ['src/main/assets']
+            jni.srcDirs = []
         }
     }
 }

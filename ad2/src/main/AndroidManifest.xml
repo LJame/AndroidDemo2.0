@@ -42,6 +42,8 @@
         </activity>
         <activity android:name="com.hardrubic.activity.JsTestActivity">
         </activity>
+        <activity android:name="com.hardrubic.activity.NdkActivity">
+        </activity>
     </application>
 
 </manifest>
