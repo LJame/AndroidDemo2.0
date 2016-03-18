@@ -28,6 +28,7 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         findViewById(R.id.tv_ExpandableListView_swipe).setOnClickListener(this);
         findViewById(R.id.tv_js_bridge).setOnClickListener(this);
         findViewById(R.id.tv_ndk).setOnClickListener(this);
+        findViewById(R.id.tv_hide_dialog).setOnClickListener(this);
     }
 
     @Override
@@ -72,6 +73,10 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
             case R.id.tv_ndk:
                 Intent intent11 = new Intent(this, NdkActivity.class);
                 startActivity(intent11);
+                break;
+            case R.id.tv_hide_dialog:
+                Intent intent12 = new Intent(this, HideDialogActivity.class);
+                startActivity(intent12);
                 break;
         }
     }
