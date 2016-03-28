@@ -10,6 +10,8 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends TitleActivity implements View.OnClickListener {
 
+    @Bind(R.id.tv_network)
+    TextView tv_network;
     @Bind(R.id.tv_three_scroll)
     TextView tv_three_scroll;
     @Bind(R.id.tv_horizontal_scroll)
@@ -32,8 +34,6 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
     TextView tv_ndk;
     @Bind(R.id.tv_hide_dialog)
     TextView tv_hide_dialog;
-    @Bind(R.id.tv_list_view_edit)
-    TextView tv_list_view_edit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,13 +57,16 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         tv_js_bridge.setOnClickListener(this);
         tv_ndk.setOnClickListener(this);
         tv_hide_dialog.setOnClickListener(this);
-        tv_list_view_edit.setOnClickListener(this);
+        tv_network.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         Intent intent = null;
         switch (v.getId()) {
+            case R.id.tv_network:
+                intent = new Intent(this, NetworkActivity.class);
+                break;
             case R.id.tv_three_scroll:
                 intent = new Intent(this, ScrollActivity.class);
                 break;
@@ -101,5 +104,11 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
                 break;
         }
         startActivity(intent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ButterKnife.bind(this);
     }
 }

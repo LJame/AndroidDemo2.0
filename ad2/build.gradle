@@ -50,4 +50,7 @@ dependencies {
     compile 'com.github.lzyzsd:jsbridge:1.0.4'
     //https://github.com/JakeWharton/butterknife
     compile 'com.jakewharton:butterknife:7.0.1'
+    //https://github.com/square/okhttp
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+
 }
