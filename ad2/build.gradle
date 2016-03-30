@@ -50,7 +50,15 @@ dependencies {
     compile 'com.github.lzyzsd:jsbridge:1.0.4'
     //https://github.com/JakeWharton/butterknife
     compile 'com.jakewharton:butterknife:7.0.1'
-    //https://github.com/square/okhttp
-    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+    //https://github.com/square/retrofit
+    compile 'com.squareup.retrofit2:retrofit:2.0.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.0.0'
+    //compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0'
+    //https://github.com/ReactiveX/RxAndroid
+    compile 'io.reactivex:rxandroid:1.1.0'
+    //https://github.com/ReactiveX/RxJava
+    compile 'io.reactivex:rxjava:1.1.2'
 
+    //https://github.com/square/okhttp
+    //compile 'com.squareup.okhttp3:okhttp:3.2.0'
 }
