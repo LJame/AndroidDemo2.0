@@ -16,14 +16,6 @@ import retrofit2.http.Url;
 
 public interface HttpServiceRest {
 
-    /**
-     * 注意
-     * url不要以/开头
-     * 下载图片使用完整URL,Base url会被忽略
-     *
-     *
-     */
-
     /** 通用下载 */
     @GET
     @Streaming

@@ -23,8 +23,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action0;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public class HttpManager {
@@ -162,31 +160,22 @@ public class HttpManager {
             }
         }).subscribeOn(Schedulers.io())    //网络请求运行在io线程
                 .observeOn(AndroidSchedulers.mainThread());   //运行完毕返回主线程
-        observable.subscribe(new Action1<T>() {
-            @Override
-            public void call(T t) {
-                LogUtils.d("onNext");
-                callback.onNext(t);
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                throwable.printStackTrace();
-                callback.onFailure(new HttpException(throwable, ERROR_CODE_H104));
-            }
-        }, new Action0() {
-            @Override
-            public void call() {
-                LogUtils.d("onComplete");
-                //callback.onComplete();
-            }
+        observable.subscribe(t -> {
+            LogUtils.d("onNext");
+            callback.onNext(t);
+        }, throwable -> {
+            throwable.printStackTrace();
+            callback.onFailure(new HttpException(throwable, ERROR_CODE_H104));
+        }, () -> {
+            LogUtils.d("onComplete");
+            //callback.onComplete();
         });
     }
 
     /**
-     * 文件同步下载请求
+     * 下载请求
      */
-    public List<HttpDownloadResult> downloadAtDiskSync(final List<HttpDownloadInfo> downloadInfoList) throws HttpException {
+    public List<HttpDownloadResult> download(final List<HttpDownloadInfo> downloadInfoList) throws HttpException {
         //TODO 校验存储空间是否足够
 
         //
@@ -209,13 +198,14 @@ public class HttpManager {
             String path = downloadInfoList.get(i).getTargetPath();
             HttpDownloadResult result = new HttpDownloadResult();
             result.setUrl(urlStr);
+            result.setTargetPath(path);
             try {
                 URL url = createUrl(urlStr);
                 Call<ResponseBody> call = service.download(urlStr);
                 retrofit2.Response<ResponseBody> retrofitResponse = call.execute();
                 if (retrofitResponse.isSuccessful()) {
                     //下载成功
-                    result.setDiskPath(HttpUtil.saveFileAtDisk(retrofitResponse.body(), path));
+                    result.setSavePath(HttpUtil.saveFileAtDisk(retrofitResponse.body(), path));
                     resultList.add(result);
                     result.setResult(true);
                 } else {
