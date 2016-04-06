@@ -13,10 +13,12 @@ import com.hardrubic.entity.response.LoginResponse;
 import com.hardrubic.entity.response.ProjectListResponse;
 import com.hardrubic.util.LogUtils;
 import com.hardrubic.util.ToastUtil;
+import com.hardrubic.util.network.HttpDownloadResult;
 import com.hardrubic.util.network.HttpException;
 import com.hardrubic.util.network.HttpManager;
 import com.hardrubic.util.network.HttpService;
 import com.hardrubic.util.network.SyncExecutorServiceUtil;
+import com.hardrubic.util.network.entity.HttpDownloadInfo;
 import java.util.ArrayList;
 import java.util.List;
 import rx.Observable;
@@ -84,6 +86,50 @@ public class NetworkActivity extends TitleActivity {
         LogUtils.d("主线程:" + Thread.currentThread().getId());
 
         pullProjectList();
+    }
+
+    @OnClick(R.id.tv_download_file)
+    void clickDownloadFile() {
+        final List<HttpDownloadInfo> infoList = new ArrayList<>();
+        String path = Constants.APP_IMG_FILE_PATH;
+        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/8c1e3a8f45076c68a9b9ff3e6c0ff75d..jpg", path));
+        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/db6cbb49672b9e0fd3336ca34c96b30d..jpg", path));
+        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/90cd56facb610f6039daf45923f2698d..jpg", path));
+        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/11e7b19623e41fd198500610403b64f1..jpg", path));
+        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path));
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                LogUtils.d("开始下载");
+                List<HttpDownloadResult> resultList = null;
+                try {
+                    resultList = HttpManager.getInstance().downloadAtDiskSync(infoList);
+                } catch (HttpException e) {
+                    e.printStackTrace();
+                }
+
+                int successSize = 0;
+                int failSize = 0;
+                for (HttpDownloadResult result : resultList) {
+                    if (result.getResult()) {
+                        successSize++;
+                    } else {
+                        failSize++;
+                        LogUtils.w(result.getUrl() + " ------ " + result.getException().getMessage());
+                    }
+                }
+
+                final int finalSuccessSize = successSize;
+                final int finalFailSize = failSize;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ToastUtil.longShow(mContext, "下载完毕,成功" + finalSuccessSize + ",失败" + finalFailSize);
+                    }
+                });
+            }
+        }).start();
     }
 
     /**

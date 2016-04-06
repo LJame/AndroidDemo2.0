@@ -3,15 +3,20 @@ package com.hardrubic.util.network;
 import android.text.TextUtils;
 import com.hardrubic.Constants;
 import com.hardrubic.util.LogUtils;
+import com.hardrubic.util.network.entity.HttpDownloadInfo;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -25,9 +30,15 @@ import rx.schedulers.Schedulers;
 public class HttpManager {
 
     private static HttpManager mInstance;
-    private static OkHttpClient okHttpClient;
     private static Retrofit retrofit;
     private static HttpServiceRest service;
+
+    /** 是否打印HTTP日志 */
+    private static final boolean PRINT_HTTP_LOG = true;
+    /** HTTP超时 */
+    private static final int HTTP_CONNECT_TIMEOUT = 1000;
+    private static final int HTTP_READ_TIMEOUT = 1000;
+    private static final int HTTP_WRITE_TIMEOUT = 1000;
 
     /** 请求url不能为空 */
     public static final String ERROR_CODE_H100 = "H100";
@@ -39,6 +50,8 @@ public class HttpManager {
     public static final String ERROR_CODE_H103 = "H103";
     /** 异步请求错误 */
     public static final String ERROR_CODE_H104 = "H104";
+    /** 文件保存路径不能为空 */
+    public static final String ERROR_CODE_H105 = "H105";
 
     public static abstract class HttpServiceCallback {
         public abstract <T> void onNext(T result);
@@ -58,12 +71,16 @@ public class HttpManager {
     }
 
     private void init() {
-        okHttpClient = new OkHttpClient.Builder()
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(new LoggingInterceptor())
+                .connectTimeout(HTTP_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
+                .readTimeout(HTTP_READ_TIMEOUT, TimeUnit.MILLISECONDS)
+                .writeTimeout(HTTP_WRITE_TIMEOUT, TimeUnit.MILLISECONDS)
                 .build();
         retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.HOST)
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
                 //.addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .build();
         service = retrofit.create(HttpServiceRest.class);
@@ -167,7 +184,57 @@ public class HttpManager {
     }
 
     /**
-     * 请求响应日志信息
+     * 文件同步下载请求
+     */
+    public List<HttpDownloadResult> downloadAtDiskSync(final List<HttpDownloadInfo> downloadInfoList) throws HttpException {
+        //TODO 校验存储空间是否足够
+
+        //
+        if (downloadInfoList == null || downloadInfoList.isEmpty()) {
+            throw new HttpException(ERROR_CODE_H100);
+        }
+
+        for (HttpDownloadInfo info : downloadInfoList) {
+            if (TextUtils.isEmpty(info.getUrl())) {
+                throw new HttpException(ERROR_CODE_H100);
+            }
+            if (TextUtils.isEmpty(info.getTargetPath())) {
+                throw new HttpException(ERROR_CODE_H105);
+            }
+        }
+
+        List<HttpDownloadResult> resultList = new ArrayList<>();
+        for (int i = 0; i < downloadInfoList.size(); i++) {
+            String urlStr = downloadInfoList.get(i).getUrl();
+            String path = downloadInfoList.get(i).getTargetPath();
+            HttpDownloadResult result = new HttpDownloadResult();
+            result.setUrl(urlStr);
+            try {
+                URL url = createUrl(urlStr);
+                Call<ResponseBody> call = service.download(urlStr);
+                retrofit2.Response<ResponseBody> retrofitResponse = call.execute();
+                if (retrofitResponse.isSuccessful()) {
+                    //下载成功
+                    result.setDiskPath(HttpUtil.saveFileAtDisk(retrofitResponse.body(), path));
+                    resultList.add(result);
+                    result.setResult(true);
+                } else {
+                    //ResponseBody errorBody = retrofitResponse.errorBody();
+                    throw new Exception(retrofitResponse.message());
+                }
+            } catch (Exception e) {
+                //下载失败
+                result.setResult(false);
+                result.setException(e);
+                resultList.add(result);
+            }
+        }
+
+        return resultList;
+    }
+
+    /**
+     * 拦截的HTTP的日志信息
      */
     public static class LoggingInterceptor implements Interceptor {
         @Override
@@ -175,17 +242,20 @@ public class HttpManager {
             Request request = chain.request();
 
             long t1 = System.nanoTime();
-            LogUtils.d(String.format("Sending request %s on %s%n%s",
-                    request.url(), chain.connection(), request.headers()));
+            if (PRINT_HTTP_LOG) {
+                //LogUtils.d(String.format("发送请求 %s 结果 %s", request.url(), request.headers()));
+            }
 
             Response response = chain.proceed(request);
 
-            long t2 = System.nanoTime();
-            LogUtils.d(String.format("Received response for %s in %.1fms%n%s",
-                    response.request().url(), (t2 - t1) / 1e6d, response.headers()));
+            if (PRINT_HTTP_LOG) {
+                long t2 = System.nanoTime();
+                LogUtils.d(String.format("收到响应请求 %s %.1fms", response.request().url(), (t2 - t1) / 1e6d));
+                //LogUtils.d(String.format("收到响应请求 %s %.1fms%n%s",
+                //        response.request().url(), (t2 - t1) / 1e6d, response.headers()));
+            }
 
             return response;
         }
     }
-
 }
