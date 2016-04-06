@@ -27,6 +27,7 @@ import java.util.List;
 
 import rx.Observable;
 import rx.Subscriber;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public class NetworkActivity extends TitleActivity {
@@ -107,29 +108,37 @@ public class NetworkActivity extends TitleActivity {
         infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/11e7b19623e41fd198500610403b64f1..jpg", path));
         infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path));
 
-        new Thread(() -> {
-            LogUtils.d("开始下载");
-            List<HttpDownloadResult> resultList = null;
-            try {
-                resultList = HttpManager.getInstance().download(infoList);
-            } catch (HttpException e) {
-                e.printStackTrace();
-            }
-
-            int successSize = 0;
-            int failSize = 0;
-            for (HttpDownloadResult result : resultList) {
-                if (result.getResult()) {
-                    successSize++;
-                } else {
-                    failSize++;
-                    LogUtils.w(result.getUrl() + " ------ " + result.getException().getMessage());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                LogUtils.d("开始下载");
+                List<HttpDownloadResult> resultList = null;
+                try {
+                    resultList = HttpManager.getInstance().download(infoList);
+                } catch (HttpException e) {
+                    e.printStackTrace();
                 }
-            }
 
-            final int finalSuccessSize = successSize;
-            final int finalFailSize = failSize;
-            runOnUiThread(() -> ToastUtil.longShow(mContext, "下载完毕,成功" + finalSuccessSize + ",失败" + finalFailSize));
+                int successSize = 0;
+                int failSize = 0;
+                for (HttpDownloadResult result : resultList) {
+                    if (result.getResult()) {
+                        successSize++;
+                    } else {
+                        failSize++;
+                        LogUtils.w(result.getUrl() + " ------ " + result.getException().getMessage());
+                    }
+                }
+
+                final int finalSuccessSize = successSize;
+                final int finalFailSize = failSize;
+                NetworkActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ToastUtil.longShow(mContext, "下载完毕,成功" + finalSuccessSize + ",失败" + finalFailSize);
+                    }
+                });
+            }
         }).start();
     }
 
@@ -137,37 +146,46 @@ public class NetworkActivity extends TitleActivity {
      * project列表
      */
     private void pullProjectList() {
-        Observable.create((Subscriber<? super String> subscriber) -> {
-            LogUtils.d("project列表线程:" + Thread.currentThread().getId());
+        Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                LogUtils.d("project列表线程:" + Thread.currentThread().getId());
 
-            List<Long> idList = new ArrayList<>();
-            try {
-                ProjectListResponse response = HttpService.applyProjectList(token);
-                if (response.getResult() != Constants.RESPOND_RESULT_OK) {
-                    throw new HttpException(ERROR_CODE_E001);
+                List<Long> idList = new ArrayList<>();
+                try {
+                    ProjectListResponse response = HttpService.applyProjectList(token);
+                    if (response.getResult() != Constants.RESPOND_RESULT_OK) {
+                        throw new HttpException(ERROR_CODE_E001);
+                    }
+
+                    List<Project> projectList = response.getData().getProjects();
+                    List<Team> teamList = response.getData().getTeams();
+                    int projectSize = projectList == null ? 0 : projectList.size();
+                    int teamSize = teamList == null ? 0 : teamList.size();
+                    LogUtils.d("同步项目成功，数量：projectList_" + projectSize + " teamList_" + teamSize);
+
+                    for (Project project : projectList) {
+                        idList.add(project.getId());
+                    }
+                } catch (HttpException e) {
+                    subscriber.onError(e);
                 }
 
-                List<Project> projectList = response.getData().getProjects();
-                List<Team> teamList = response.getData().getTeams();
-                int projectSize = projectList == null ? 0 : projectList.size();
-                int teamSize = teamList == null ? 0 : teamList.size();
-                LogUtils.d("同步项目成功，数量：projectList_" + projectSize + " teamList_" + teamSize);
-
-                for (Project project : projectList) {
-                    idList.add(project.getId());
-                }
-            } catch (HttpException e) {
-                subscriber.onError(e);
+                subscriber.onNext(TextUtils.join(",", idList));
             }
-
-            subscriber.onNext(TextUtils.join(",", idList));
         })
                 .subscribeOn(Schedulers.from(SyncExecutorServiceUtil.getFixedThreadPool()))
                 .observeOn(Schedulers.newThread())
-                .subscribe(o -> {
-                    LogUtils.d("onNext");
-                }, throwable -> {
-                    throwable.printStackTrace();
+                .subscribe(new Action1<String>() {
+                    @Override
+                    public void call(String o) {
+                        LogUtils.d("onNext");
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        throwable.printStackTrace();
+                    }
                 });
     }
 
