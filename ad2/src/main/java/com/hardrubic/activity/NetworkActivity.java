@@ -14,14 +14,17 @@ import com.hardrubic.entity.db.Project;
 import com.hardrubic.entity.db.Team;
 import com.hardrubic.entity.response.LoginResponse;
 import com.hardrubic.entity.response.ProjectListResponse;
+import com.hardrubic.entity.response.UploadAuthResponse;
 import com.hardrubic.util.LogUtils;
 import com.hardrubic.util.ToastUtil;
-import com.hardrubic.util.network.HttpDownloadResult;
+import com.hardrubic.util.network.entity.HttpDownloadResult;
 import com.hardrubic.util.network.HttpException;
 import com.hardrubic.util.network.HttpManager;
 import com.hardrubic.util.network.HttpService;
 import com.hardrubic.util.network.SyncExecutorServiceUtil;
 import com.hardrubic.util.network.entity.HttpDownloadInfo;
+import com.hardrubic.util.network.entity.HttpUploadInfo;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +36,7 @@ import rx.schedulers.Schedulers;
 public class NetworkActivity extends TitleActivity {
     private Context mContext;
     private String token;
+    private String auth;
 
     /**
      * 同步项目接口
@@ -140,6 +144,44 @@ public class NetworkActivity extends TitleActivity {
                 });
             }
         }).start();
+    }
+
+    @OnClick(R.id.tv_get_auth)
+    void clickGetUploadAuth(){
+        if (TextUtils.isEmpty(token)) {
+            ToastUtil.longShow(mContext, "请先登陆");
+            return;
+        }
+
+        HttpService.applyUploadAuth(token, new HttpManager.HttpServiceCallback() {
+            @Override
+            public <T> void onNext(T result) {
+                UploadAuthResponse response = (UploadAuthResponse) result;
+                if (response.getResult() == Constants.RESPOND_RESULT_OK) {
+                    auth = response.getData().getUpload_auth();
+                    ToastUtil.longShow(mContext, "获取上传凭证成功");
+                } else {
+                    ToastUtil.longShow(mContext, response.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(HttpException e) {
+                ToastUtil.longShow(mContext, e.getMessage());
+            }
+        });
+    }
+
+    @OnClick(R.id.tv_upload_file)
+    void clickUploadFile(){
+        File file = new File("/");
+        HttpUploadInfo httpUploadInfo = new HttpUploadInfo();
+        httpUploadInfo.setFile(file);
+        List<HttpUploadInfo> uploadInfoList = new ArrayList<>();
+        uploadInfoList.add(httpUploadInfo);
+
+        HttpService.applyUploadPhoto(token,auth,md5,projectId,)
+
     }
 
     /**

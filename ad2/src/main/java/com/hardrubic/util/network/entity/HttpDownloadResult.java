@@ -1,20 +1,20 @@
-package com.hardrubic.util.network;
+package com.hardrubic.util.network.entity;
 
 /**
  * 文件下载结果
  */
 public class HttpDownloadResult {
-    private Boolean result;
+    private boolean result;
     private String url;
     private String targetPath;  //目标保存路径
     private String savePath;    //最终保存路径
     private Exception exception;
 
-    public Boolean getResult() {
+    public boolean getResult() {
         return result;
     }
 
-    public void setResult(Boolean result) {
+    public void setResult(boolean result) {
         this.result = result;
     }
 

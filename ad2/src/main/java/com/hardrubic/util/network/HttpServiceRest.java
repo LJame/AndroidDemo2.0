@@ -3,13 +3,18 @@ package com.hardrubic.util.network;
 
 import com.hardrubic.entity.response.LoginResponse;
 import com.hardrubic.entity.response.ProjectListResponse;
+import com.hardrubic.entity.response.UploadAuthResponse;
+import com.hardrubic.entity.response.UploadPhotoResponse;
 import java.util.TreeMap;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
+import retrofit2.http.Body;
 import retrofit2.http.FieldMap;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.PartMap;
 import retrofit2.http.QueryMap;
 import retrofit2.http.Streaming;
 import retrofit2.http.Url;
@@ -33,4 +38,16 @@ public interface HttpServiceRest {
 
     @GET(URL_PROJECT_LIST)
     Call<ProjectListResponse> doGetProjectList(@QueryMap TreeMap<String, String> paramMap);
+
+    /** 4.5获取上传凭证 */
+    String URL_GET_UPLOAD_AUTH = "v2/api/project/upload_auth";
+
+    @GET(URL_GET_UPLOAD_AUTH)
+    UploadAuthResponse doGetUploadAuth(@QueryMap TreeMap<String, String> paramMap);
+
+    /** 4.6上传项目图片文件 */
+    String URL_UPLOAD_IMAGE = "/v2/api/project/report_image";
+
+    @POST(URL_UPLOAD_IMAGE)
+    UploadPhotoResponse doUploadImage(@Body RequestBody file, @PartMap TreeMap<String, String> paramMap);
 }

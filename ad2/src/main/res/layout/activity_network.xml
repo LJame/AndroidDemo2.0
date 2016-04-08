@@ -53,6 +53,34 @@
             android:textSize="24sp"
             android:text="文件下载"/>
 
+        <TextView
+            android:id="@+id/tv_get_auth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:text="获取上传凭证"/>
+
+        <TextView
+            android:id="@+id/tv_upload_file"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:text="文件上传"/>
+
     </LinearLayout>
 
 </ScrollView>

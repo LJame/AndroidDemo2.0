@@ -4,6 +4,10 @@ import android.text.TextUtils;
 import com.hardrubic.Constants;
 import com.hardrubic.util.LogUtils;
 import com.hardrubic.util.network.entity.HttpDownloadInfo;
+import com.hardrubic.util.network.entity.HttpDownloadResult;
+import com.hardrubic.util.network.entity.HttpUploadInfo;
+import com.hardrubic.util.network.entity.HttpUploadResult;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -52,6 +56,10 @@ public class HttpManager {
     public static final String ERROR_CODE_H104 = "H104";
     /** 文件保存路径不能为空 */
     public static final String ERROR_CODE_H105 = "H105";
+    /** 缺少上传下载信息 */
+    public static final String ERROR_CODE_H106 = "H106";
+    /** 文件不存在 */
+    public static final String ERROR_CODE_H107 = "H107";
 
     public static abstract class HttpServiceCallback {
         public abstract <T> void onNext(T result);
@@ -184,19 +192,19 @@ public class HttpManager {
     }
 
     /**
-     * 下载请求
+     * 同步下载文件请求
      */
     public List<HttpDownloadResult> download(final List<HttpDownloadInfo> downloadInfoList) throws HttpException {
         //TODO 校验存储空间是否足够
 
         //
         if (downloadInfoList == null || downloadInfoList.isEmpty()) {
-            throw new HttpException(ERROR_CODE_H100);
+            throw new HttpException(ERROR_CODE_H106);
         }
 
         for (HttpDownloadInfo info : downloadInfoList) {
             if (TextUtils.isEmpty(info.getUrl())) {
-                throw new HttpException(ERROR_CODE_H100);
+                throw new HttpException(ERROR_CODE_H106);
             }
             if (TextUtils.isEmpty(info.getTargetPath())) {
                 throw new HttpException(ERROR_CODE_H105);
@@ -204,9 +212,9 @@ public class HttpManager {
         }
 
         List<HttpDownloadResult> resultList = new ArrayList<>();
-        for (int i = 0; i < downloadInfoList.size(); i++) {
-            String urlStr = downloadInfoList.get(i).getUrl();
-            String path = downloadInfoList.get(i).getTargetPath();
+        for (HttpDownloadInfo httpDownloadInfo : downloadInfoList) {
+            String urlStr = httpDownloadInfo.getUrl();
+            String path = httpDownloadInfo.getTargetPath();
             HttpDownloadResult result = new HttpDownloadResult();
             result.setUrl(urlStr);
             result.setTargetPath(path);
@@ -231,6 +239,44 @@ public class HttpManager {
             }
         }
 
+        return resultList;
+    }
+
+    /**
+     * 同步上传文件请求
+     */
+    public List<HttpUploadResult> upload(String urlStr, List<HttpUploadInfo> uploadFileList, TreeMap<String, String> paramMap) throws HttpException {
+        if (uploadFileList == null || uploadFileList.isEmpty()) {
+            throw new HttpException(ERROR_CODE_H106);
+        }
+
+        for (HttpUploadInfo httpUploadInfo : uploadFileList) {
+            File file = httpUploadInfo.getFile();
+            if (file == null || !file.exists()) {
+                throw new HttpException(ERROR_CODE_H107);
+            }
+        }
+
+        URL url = createUrl(urlStr);
+        Method method = createMethod(url);
+
+        List<HttpUploadResult> resultList = new ArrayList<>();
+        for (HttpUploadInfo httpUploadInfo : uploadFileList) {
+            File file = httpUploadInfo.getFile();
+            HttpUploadResult result = new HttpUploadResult();
+            result.setFileName(file.getName());
+            result.setFilePath(file.getAbsolutePath());
+            try {
+                //ResponseBody fileBody = ResponseBody.create(MediaType.parse("imag/jpeg"), file);
+                //Call<T> call = service.doUploadImage(fileBody,paramMap);
+
+                //Call<T> call = (Call<T>) method.invoke(service, paramMap);
+                //retrofit2.Response<T> response = call.execute();
+            } catch (Exception e) {
+                //上传失败
+                result.setResult(false);
+            }
+        }
         return resultList;
     }
 
