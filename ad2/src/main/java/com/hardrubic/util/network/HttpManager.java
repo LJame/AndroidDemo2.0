@@ -1,24 +1,29 @@
 package com.hardrubic.util.network;
 
 import android.text.TextUtils;
+
 import com.hardrubic.Constants;
 import com.hardrubic.util.LogUtils;
 import com.hardrubic.util.network.entity.HttpDownloadInfo;
 import com.hardrubic.util.network.entity.HttpDownloadResult;
-import com.hardrubic.util.network.entity.HttpUploadInfo;
-import com.hardrubic.util.network.entity.HttpUploadResult;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.Interceptor;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -37,29 +42,53 @@ public class HttpManager {
     private static Retrofit retrofit;
     private static HttpServiceRest service;
 
-    /** 是否打印HTTP日志 */
+    /**
+     * 是否打印HTTP日志
+     */
     private static final boolean PRINT_HTTP_LOG = true;
-    /** HTTP超时 */
+    /**
+     * HTTP超时
+     */
     private static final int HTTP_CONNECT_TIMEOUT = 1000;
-    private static final int HTTP_READ_TIMEOUT = 1000;
-    private static final int HTTP_WRITE_TIMEOUT = 1000;
+    private static final int HTTP_READ_TIMEOUT = 1000 * 3;
+    private static final int HTTP_WRITE_TIMEOUT = 1000 * 3;
 
-    /** 请求url不能为空 */
+    /**
+     * 请求url不能为空
+     */
     public static final String ERROR_CODE_H100 = "H100";
-    /** 无法找到URL对应的REST方法 */
+    /**
+     * 无法找到URL对应的REST方法
+     */
     public static final String ERROR_CODE_H101 = "H101";
-    /** 非法url */
+    /**
+     * 非法url
+     */
     public static final String ERROR_CODE_H102 = "H102";
-    /** 同步请求错误 */
+    /**
+     * 同步请求错误
+     */
     public static final String ERROR_CODE_H103 = "H103";
-    /** 异步请求错误 */
+    /**
+     * 异步请求错误
+     */
     public static final String ERROR_CODE_H104 = "H104";
-    /** 文件保存路径不能为空 */
+    /**
+     * 文件保存路径不能为空
+     */
     public static final String ERROR_CODE_H105 = "H105";
-    /** 缺少上传下载信息 */
+    /**
+     * 缺少上传下载信息
+     */
     public static final String ERROR_CODE_H106 = "H106";
-    /** 文件不存在 */
+    /**
+     * 文件不存在
+     */
     public static final String ERROR_CODE_H107 = "H107";
+    /**
+     * 同步上传文件错误
+     */
+    public static final String ERROR_CODE_H108 = "H108";
 
     public static abstract class HttpServiceCallback {
         public abstract <T> void onNext(T result);
@@ -194,6 +223,16 @@ public class HttpManager {
     /**
      * 同步下载文件请求
      */
+    public List<HttpDownloadResult> download(String url, String savePath) throws HttpException {
+        List<HttpDownloadInfo> downloadInfoList = new ArrayList<>();
+        HttpDownloadInfo httpDownloadInfo = new HttpDownloadInfo(url, savePath);
+        downloadInfoList.add(httpDownloadInfo);
+        return download(downloadInfoList);
+    }
+
+    /**
+     * 同步下载文件请求
+     */
     public List<HttpDownloadResult> download(final List<HttpDownloadInfo> downloadInfoList) throws HttpException {
         //TODO 校验存储空间是否足够
 
@@ -245,39 +284,37 @@ public class HttpManager {
     /**
      * 同步上传文件请求
      */
-    public List<HttpUploadResult> upload(String urlStr, List<HttpUploadInfo> uploadFileList, TreeMap<String, String> paramMap) throws HttpException {
-        if (uploadFileList == null || uploadFileList.isEmpty()) {
-            throw new HttpException(ERROR_CODE_H106);
+    public <T> T upload(String urlStr, TreeMap<String, File> fileMap, TreeMap<String, String> paramMap) throws HttpException {
+        //check file exist
+        Collection<File> fileList = fileMap.values();
+        if (fileList == null || fileList.isEmpty()) {
+            throw new HttpException(ERROR_CODE_H107);
         }
-
-        for (HttpUploadInfo httpUploadInfo : uploadFileList) {
-            File file = httpUploadInfo.getFile();
-            if (file == null || !file.exists()) {
+        for (File file : fileList) {
+            if (!file.exists()) {
                 throw new HttpException(ERROR_CODE_H107);
             }
         }
 
+        //file --> requestBody
+        TreeMap<String, RequestBody> requestBodyTreeMap = new TreeMap<>();
+        for (Map.Entry<String, File> entry : fileMap.entrySet()) {
+            MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");    //默认上传图片
+            RequestBody requestBody = RequestBody.create(MEDIA_TYPE_PNG, entry.getValue());
+            requestBodyTreeMap.put(entry.getKey(), requestBody);
+        }
+
         URL url = createUrl(urlStr);
         Method method = createMethod(url);
-
-        List<HttpUploadResult> resultList = new ArrayList<>();
-        for (HttpUploadInfo httpUploadInfo : uploadFileList) {
-            File file = httpUploadInfo.getFile();
-            HttpUploadResult result = new HttpUploadResult();
-            result.setFileName(file.getName());
-            result.setFilePath(file.getAbsolutePath());
-            try {
-                //ResponseBody fileBody = ResponseBody.create(MediaType.parse("imag/jpeg"), file);
-                //Call<T> call = service.doUploadImage(fileBody,paramMap);
-
-                //Call<T> call = (Call<T>) method.invoke(service, paramMap);
-                //retrofit2.Response<T> response = call.execute();
-            } catch (Exception e) {
-                //上传失败
-                result.setResult(false);
-            }
+        Call<T> call;
+        retrofit2.Response<T> response;
+        try {
+            call = (Call<T>) method.invoke(service, paramMap, requestBodyTreeMap);
+            response = call.execute();
+        } catch (Exception e) {
+            throw new HttpException(e, ERROR_CODE_H108, e.getMessage());
         }
-        return resultList;
+        return response.body();
     }
 
     /**
@@ -290,7 +327,7 @@ public class HttpManager {
 
             long t1 = System.nanoTime();
             if (PRINT_HTTP_LOG) {
-                //LogUtils.d(String.format("发送请求 %s 结果 %s", request.url(), request.headers()));
+                 //LogUtils.d(String.format("发送请求 %s 结果 %s", request.url(), request.headers()));
             }
 
             Response response = chain.proceed(request);

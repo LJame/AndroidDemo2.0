@@ -1,19 +1,23 @@
 package com.hardrubic.util.network;
 
 
-import android.content.Context;
 import com.hardrubic.Constants;
 import com.hardrubic.entity.response.LoginResponse;
 import com.hardrubic.entity.response.ProjectListResponse;
 import com.hardrubic.entity.response.UploadAuthResponse;
 import com.hardrubic.entity.response.UploadPhotoResponse;
+
 import java.io.File;
 import java.util.TreeMap;
+
+import okhttp3.RequestBody;
 import retrofit2.Response;
 
 public class HttpService {
 
-    /** 2.1 登录接口 */
+    /**
+     * 2.1 登录接口
+     */
     public static LoginResponse applyLoginIn(String username, String password) throws HttpException {
         TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("username", username);
@@ -22,7 +26,9 @@ public class HttpService {
         return response.body();
     }
 
-    /** 2.1 登录接口 */
+    /**
+     * 2.1 登录接口
+     */
     public static void applyLoginIn(String username, String password, HttpManager.HttpServiceCallback callback) {
         TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("username", username);
@@ -30,7 +36,9 @@ public class HttpService {
         HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap, callback);
     }
 
-    /** 4.1项目列表 */
+    /**
+     * 4.1项目列表
+     */
     public static ProjectListResponse applyProjectList(String token) throws HttpException {
         final TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("token", token);
@@ -43,25 +51,25 @@ public class HttpService {
     /**
      * 4.5 获取上传凭证
      */
-    public static void applyUploadAuth(String token, HttpManager.HttpServiceCallback callback){
+    public static UploadAuthResponse applyUploadAuth(String token) throws HttpException {
         final TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("token", token);
 
-        HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_GET_UPLOAD_AUTH, treeMap, callback);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_GET_UPLOAD_AUTH, treeMap);
     }
 
     /**
-     * 4.6 上传项目图片文件
+     * 4.6 上传图片文件
      */
     public static UploadPhotoResponse applyUploadPhoto(String token, String auth, String md5, Long projectId, File file) throws HttpException {
-        final TreeMap<String, File> fileMap = new TreeMap<>();
-        fileMap.put("userfile", file);
-
         final TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("token", token);
         treeMap.put("auth", auth);
         treeMap.put("md5", md5);
         treeMap.put("project_id", projectId.toString());
+
+        TreeMap<String, File> fileMap = new TreeMap<>();
+        fileMap.put("userfile", file);
 
         UploadPhotoResponse response = HttpManager.getInstance().upload(Constants.HOST + HttpServiceRest.URL_UPLOAD_IMAGE, fileMap, treeMap);
         return response;

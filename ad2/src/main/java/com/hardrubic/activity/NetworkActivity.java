@@ -5,6 +5,8 @@ import ad2.hardrubic.com.androiddemo20.R;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.View;
+import android.widget.TextView;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -15,15 +17,18 @@ import com.hardrubic.entity.db.Team;
 import com.hardrubic.entity.response.LoginResponse;
 import com.hardrubic.entity.response.ProjectListResponse;
 import com.hardrubic.entity.response.UploadAuthResponse;
+import com.hardrubic.entity.response.UploadPhotoResponse;
 import com.hardrubic.util.LogUtils;
+import com.hardrubic.util.MD5Utils;
 import com.hardrubic.util.ToastUtil;
+import com.hardrubic.util.network.PreferencesUtils;
 import com.hardrubic.util.network.entity.HttpDownloadResult;
 import com.hardrubic.util.network.HttpException;
 import com.hardrubic.util.network.HttpManager;
 import com.hardrubic.util.network.HttpService;
 import com.hardrubic.util.network.SyncExecutorServiceUtil;
 import com.hardrubic.util.network.entity.HttpDownloadInfo;
-import com.hardrubic.util.network.entity.HttpUploadInfo;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,21 +41,14 @@ import rx.schedulers.Schedulers;
 public class NetworkActivity extends TitleActivity {
     private Context mContext;
     private String token;
-    private String auth;
+    private HttpDownloadResult downloadFileInfo;
+
+    private TextView tv_token;
 
     /**
      * 同步项目接口
      */
     public static final String ERROR_CODE_E001 = "E001";
-    /**
-     * 同步用户与角色接口
-     */
-    public static final String ERROR_CODE_E002 = "E002";
-    /**
-     * 同步项目检查项接口
-     */
-    public static final String ERROR_CODE_E003 = "E003";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +56,13 @@ public class NetworkActivity extends TitleActivity {
         setContentView(R.layout.activity_network);
         mContext = this;
         ButterKnife.bind(this);
+
+        tv_token = (TextView) findViewById(R.id.tv_token);
+        token = PreferencesUtils.getInstance().getString("token");
+        if(!TextUtils.isEmpty(token)){
+            tv_token.setText(token);
+            tv_token.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -66,6 +71,9 @@ public class NetworkActivity extends TitleActivity {
         ButterKnife.unbind(this);
     }
 
+    /**
+     * 登陆
+     */
     @OnClick(R.id.tv_login_in)
     void clickLoginIn() {
         String username = "htwy";
@@ -77,6 +85,9 @@ public class NetworkActivity extends TitleActivity {
                 LoginResponse response = (LoginResponse) result;
                 if (response.getResult() == Constants.RESPOND_RESULT_OK) {
                     token = response.getData().getToken();
+                    tv_token.setText(token);
+                    tv_token.setVisibility(View.VISIBLE);
+                    PreferencesUtils.getInstance().putString("token",token);
                     ToastUtil.longShow(mContext, "登陆成功");
                 } else {
                     ToastUtil.longShow(mContext, response.getMessage());
@@ -90,6 +101,9 @@ public class NetworkActivity extends TitleActivity {
         });
     }
 
+    /**
+     * 同步
+     */
     @OnClick(R.id.tv_sync_all)
     void clickSyncAll() {
         if (TextUtils.isEmpty(token)) {
@@ -102,6 +116,9 @@ public class NetworkActivity extends TitleActivity {
         pullProjectList();
     }
 
+    /**
+     * 文件下载
+     */
     @OnClick(R.id.tv_download_file)
     void clickDownloadFile() {
         final List<HttpDownloadInfo> infoList = new ArrayList<>();
@@ -128,6 +145,7 @@ public class NetworkActivity extends TitleActivity {
                 for (HttpDownloadResult result : resultList) {
                     if (result.getResult()) {
                         successSize++;
+                        downloadFileInfo = result;
                     } else {
                         failSize++;
                         LogUtils.w(result.getUrl() + " ------ " + result.getException().getMessage());
@@ -146,42 +164,59 @@ public class NetworkActivity extends TitleActivity {
         }).start();
     }
 
-    @OnClick(R.id.tv_get_auth)
-    void clickGetUploadAuth(){
+    /**
+     * 文件上传
+     */
+    @OnClick(R.id.tv_upload_file)
+    void clickUploadFile() {
+        if (downloadFileInfo == null) {
+            ToastUtil.longShow(mContext, "没有待上传文件");
+            return;
+        }
+
         if (TextUtils.isEmpty(token)) {
             ToastUtil.longShow(mContext, "请先登陆");
             return;
         }
 
-        HttpService.applyUploadAuth(token, new HttpManager.HttpServiceCallback() {
+        final File file = new File(downloadFileInfo.getSavePath());
+        final String md5 = MD5Utils.calculate(file);
+        final Long projectId = 12l;
+        new Thread(new Runnable() {
             @Override
-            public <T> void onNext(T result) {
-                UploadAuthResponse response = (UploadAuthResponse) result;
-                if (response.getResult() == Constants.RESPOND_RESULT_OK) {
-                    auth = response.getData().getUpload_auth();
-                    ToastUtil.longShow(mContext, "获取上传凭证成功");
-                } else {
-                    ToastUtil.longShow(mContext, response.getMessage());
+            public void run() {
+                String msg = "";
+                try {
+                    //获取上传凭证
+                    UploadAuthResponse uploadAuthResponse = HttpService.applyUploadAuth(token);
+                    String auth = null;
+                    if (uploadAuthResponse.getResult() == Constants.RESPOND_RESULT_OK) {
+                        auth = uploadAuthResponse.getData().getUpload_auth();
+                    } else {
+                        msg = uploadAuthResponse.getMessage();
+                    }
+
+                    if (!TextUtils.isEmpty(auth)) {
+                        UploadPhotoResponse response = HttpService.applyUploadPhoto(token, auth, md5, projectId, file);
+                        if (response.getResult() == Constants.RESPOND_RESULT_OK) {
+                            msg = "上传文件成功";
+                        } else {
+                            msg = response.getMessage();
+                        }
+                    }
+                } catch (HttpException e) {
+                    e.printStackTrace();
+                    msg = e.getMessage();
                 }
+                final String finalMsg = msg;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ToastUtil.longShow(mContext, finalMsg);
+                    }
+                });
             }
-
-            @Override
-            public void onFailure(HttpException e) {
-                ToastUtil.longShow(mContext, e.getMessage());
-            }
-        });
-    }
-
-    @OnClick(R.id.tv_upload_file)
-    void clickUploadFile(){
-        File file = new File("/");
-        HttpUploadInfo httpUploadInfo = new HttpUploadInfo();
-        httpUploadInfo.setFile(file);
-        List<HttpUploadInfo> uploadInfoList = new ArrayList<>();
-        uploadInfoList.add(httpUploadInfo);
-
-        HttpService.applyUploadPhoto(token,auth,md5,projectId,)
-
+        }).start();
     }
 
     /**
