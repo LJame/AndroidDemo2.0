@@ -6,62 +6,47 @@ import com.hardrubic.entity.response.LoginResponse;
 import com.hardrubic.entity.response.ProjectListResponse;
 import com.hardrubic.entity.response.UploadAuthResponse;
 import com.hardrubic.entity.response.UploadPhotoResponse;
-
 import java.io.File;
 import java.util.TreeMap;
-
-import okhttp3.RequestBody;
-import retrofit2.Response;
+import rx.Observable;
 
 public class HttpService {
 
     /**
      * 2.1 登录接口
      */
-    public static LoginResponse applyLoginIn(String username, String password) throws HttpException {
+    public static Observable<LoginResponse> applyLoginIn(String username, String password) {
         TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("username", username);
         treeMap.put("password", password);
-        Response<LoginResponse> response = HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap);
-        return response.body();
-    }
-
-    /**
-     * 2.1 登录接口
-     */
-    public static void applyLoginIn(String username, String password, HttpManager.HttpServiceCallback callback) {
-        TreeMap<String, String> treeMap = new TreeMap<>();
-        treeMap.put("username", username);
-        treeMap.put("password", password);
-        HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap, callback);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap);
     }
 
     /**
      * 4.1项目列表
      */
-    public static ProjectListResponse applyProjectList(String token) throws HttpException {
+    public static Observable<ProjectListResponse> applyProjectList(String token) {
         final TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("token", token);
         treeMap.put("timestamp", "0");
 
-        ProjectListResponse response = HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_PROJECT_LIST, treeMap);
-        return response;
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_PROJECT_LIST, treeMap);
     }
 
     /**
      * 4.5 获取上传凭证
      */
-    public static UploadAuthResponse applyUploadAuth(String token) throws HttpException {
+    public static Observable<UploadAuthResponse> applyUploadAuth(String token) {
         final TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("token", token);
 
-        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_GET_UPLOAD_AUTH, treeMap);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_GET_UPLOAD_AUTH, treeMap, true);
     }
 
     /**
      * 4.6 上传图片文件
      */
-    public static UploadPhotoResponse applyUploadPhoto(String token, String auth, String md5, Long projectId, File file) throws HttpException {
+    public static Observable<UploadPhotoResponse> applyUploadPhoto(String token, String auth, String md5, Long projectId, File file) {
         final TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("token", token);
         treeMap.put("auth", auth);
@@ -71,7 +56,6 @@ public class HttpService {
         TreeMap<String, File> fileMap = new TreeMap<>();
         fileMap.put("userfile", file);
 
-        UploadPhotoResponse response = HttpManager.getInstance().upload(Constants.HOST + HttpServiceRest.URL_UPLOAD_IMAGE, fileMap, treeMap);
-        return response;
+        return HttpManager.getInstance().upload(Constants.HOST + HttpServiceRest.URL_UPLOAD_IMAGE, fileMap, treeMap, null, false);
     }
 }

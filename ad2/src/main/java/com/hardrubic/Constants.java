@@ -5,7 +5,7 @@ import com.hardrubic.util.DeviceUtils;
 import java.io.File;
 
 public class Constants {
-    public static String HOST = "http://test.admin.buildingqm.com:80/";
+    public static String HOST = "http://test.admin.buildingqm.com:80";
     public static final int RESPOND_RESULT_OK = 0;
 
     /** app文件保存路径 */

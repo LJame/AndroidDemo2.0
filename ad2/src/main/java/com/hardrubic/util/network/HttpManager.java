@@ -1,12 +1,10 @@
 package com.hardrubic.util.network;
 
 import android.text.TextUtils;
-
 import com.hardrubic.Constants;
 import com.hardrubic.util.LogUtils;
 import com.hardrubic.util.network.entity.HttpDownloadInfo;
 import com.hardrubic.util.network.entity.HttpDownloadResult;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -17,8 +15,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -30,10 +28,9 @@ import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
+import rx.Scheduler;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action0;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public class HttpManager {
@@ -89,12 +86,6 @@ public class HttpManager {
      * 同步上传文件错误
      */
     public static final String ERROR_CODE_H108 = "H108";
-
-    public static abstract class HttpServiceCallback {
-        public abstract <T> void onNext(T result);
-
-        public abstract void onFailure(HttpException e);
-    }
 
     private HttpManager() {
         init();
@@ -152,72 +143,80 @@ public class HttpManager {
         return method;
     }
 
-    /**
-     * 同步请求
-     */
-    public <T> T send(String urlStr, TreeMap<String, String> paramMap) throws HttpException {
-        URL url = createUrl(urlStr);
-        Method method = createMethod(url);
-
-        Call<T> call;
-        retrofit2.Response<T> response;
-        try {
-            call = (Call<T>) method.invoke(service, paramMap);
-            response = call.execute();
-        } catch (Exception e) {
-            throw new HttpException(e, ERROR_CODE_H103, e.getMessage());
+    private Scheduler createSubscribeScheduler(ExecutorService executorService, boolean isSync) {
+        Scheduler subscribeScheduler;
+        if (isSync) {
+            //同步
+            subscribeScheduler = Schedulers.immediate();
+        } else {
+            //异步
+            if (executorService == null) {
+                subscribeScheduler = Schedulers.io();   //请求运行在io线程
+            } else {
+                subscribeScheduler = Schedulers.from(executorService);   //请求运行在线程池
+            }
         }
+        return subscribeScheduler;
+    }
 
-        return response.body();
+    private Scheduler createObserveScheduler(boolean isSync) {
+        Scheduler observeScheduler;
+        if (isSync) {
+            //同步
+            observeScheduler = Schedulers.immediate();
+        } else {
+            observeScheduler = AndroidSchedulers.mainThread();  //运行完毕返回主线程
+        }
+        return observeScheduler;
     }
 
     /**
-     * 异步请求
+     * 普通请求(异步,不使用线程池)
      */
-    public <T> void send(String urlStr, final TreeMap<String, String> paramMap, final HttpServiceCallback callback) {
-        //
-        Method method = null;
-        try {
-            URL url = createUrl(urlStr);
-            method = createMethod(url);
-        } catch (HttpException e) {
-            callback.onFailure(e);
-        }
+    public <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap) {
+        return this.send(urlStr, paramMap, null, false);
+    }
 
-        final Method finalMethod = method;
-        Observable<T> observable = Observable.create(new Observable.OnSubscribe<T>() {
+    /**
+     * 普通请求(异步,使用线程池)
+     */
+    public <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap, ExecutorService executorService) {
+        return this.send(urlStr, paramMap, executorService, false);
+    }
+
+    /**
+     * 普通请求(同步)
+     */
+    public <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap, boolean isSync) {
+        return this.send(urlStr, paramMap, null, isSync);
+    }
+
+    /**
+     * 普通请求
+     */
+    private <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap, ExecutorService executorService, boolean isSync) {
+        Scheduler subscribeScheduler = createSubscribeScheduler(executorService, isSync);
+        Scheduler observeScheduler = createObserveScheduler(isSync);
+
+        return Observable.create(new Observable.OnSubscribe<T>() {
             @Override
             public void call(Subscriber<? super T> subscriber) {
                 try {
-                    Call<T> call = (Call<T>) finalMethod.invoke(service, paramMap);
+                    URL url = createUrl(urlStr);
+                    Method method = createMethod(url);
+                    Call<T> call = (Call<T>) method.invoke(service, paramMap);
                     retrofit2.Response<T> response = call.execute();
                     subscriber.onNext(response.body());
+                } catch (HttpException e) {
+                    e.printStackTrace();
+                    subscriber.onError(e);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    callback.onFailure(new HttpException(e, ERROR_CODE_H104));
+                    subscriber.onError(new HttpException(e, ERROR_CODE_H104));
                 }
             }
-        }).subscribeOn(Schedulers.io())    //网络请求运行在io线程
-                .observeOn(AndroidSchedulers.mainThread());   //运行完毕返回主线程
-        observable.subscribe(new Action1<T>() {
-            @Override
-            public void call(T t) {
-                LogUtils.d("onNext");
-                callback.onNext(t);
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                throwable.printStackTrace();
-                callback.onFailure(new HttpException(throwable, ERROR_CODE_H104));
-            }
-        }, new Action0() {
-            @Override
-            public void call() {
-                LogUtils.d("onComplete");
-                //callback.onComplete();
-            }
-        });
+        }).subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler);
     }
 
     /**
@@ -282,39 +281,50 @@ public class HttpManager {
     }
 
     /**
-     * 同步上传文件请求
+     * 上传文件请求
      */
-    public <T> T upload(String urlStr, TreeMap<String, File> fileMap, TreeMap<String, String> paramMap) throws HttpException {
-        //check file exist
-        Collection<File> fileList = fileMap.values();
-        if (fileList == null || fileList.isEmpty()) {
-            throw new HttpException(ERROR_CODE_H107);
-        }
-        for (File file : fileList) {
-            if (!file.exists()) {
-                throw new HttpException(ERROR_CODE_H107);
+    public <T> Observable<T> upload(final String urlStr, final TreeMap<String, File> fileMap, final TreeMap<String, String> paramMap, ExecutorService executorService, boolean isSync) {
+        Scheduler subscribeScheduler = createSubscribeScheduler(executorService, isSync);
+        Scheduler observeScheduler = createObserveScheduler(isSync);
+
+        return Observable.create(new Observable.OnSubscribe<T>() {
+            @Override
+            public void call(Subscriber<? super T> subscriber) {
+                //判断文件是否存在
+                Collection<File> fileList = fileMap.values();
+                if (fileList == null || fileList.isEmpty()) {
+                    subscriber.onError(new HttpException(ERROR_CODE_H107));
+                }
+                for (File file : fileList) {
+                    if (!file.exists()) {
+                        subscriber.onError(new HttpException(ERROR_CODE_H107));
+                    }
+                }
+
+                //file --> requestBody
+                TreeMap<String, RequestBody> requestBodyTreeMap = new TreeMap<>();
+                for (Map.Entry<String, File> entry : fileMap.entrySet()) {
+                    MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");    //默认上传图片
+                    RequestBody requestBody = RequestBody.create(MEDIA_TYPE_PNG, entry.getValue());
+                    requestBodyTreeMap.put(entry.getKey(), requestBody);
+                }
+
+                try {
+                    URL url = createUrl(urlStr);
+                    Method method = createMethod(url);
+                    Call<T>  call = (Call<T>) method.invoke(service, paramMap, requestBodyTreeMap);
+                    retrofit2.Response<T> response = call.execute();
+                    subscriber.onNext(response.body());
+                } catch (HttpException e) {
+                    e.printStackTrace();
+                    subscriber.onError(e);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    subscriber.onError(new HttpException(e, ERROR_CODE_H104));
+                }
             }
-        }
-
-        //file --> requestBody
-        TreeMap<String, RequestBody> requestBodyTreeMap = new TreeMap<>();
-        for (Map.Entry<String, File> entry : fileMap.entrySet()) {
-            MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");    //默认上传图片
-            RequestBody requestBody = RequestBody.create(MEDIA_TYPE_PNG, entry.getValue());
-            requestBodyTreeMap.put(entry.getKey(), requestBody);
-        }
-
-        URL url = createUrl(urlStr);
-        Method method = createMethod(url);
-        Call<T> call;
-        retrofit2.Response<T> response;
-        try {
-            call = (Call<T>) method.invoke(service, paramMap, requestBodyTreeMap);
-            response = call.execute();
-        } catch (Exception e) {
-            throw new HttpException(e, ERROR_CODE_H108, e.getMessage());
-        }
-        return response.body();
+        }).subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler);
     }
 
     /**
@@ -327,14 +337,14 @@ public class HttpManager {
 
             long t1 = System.nanoTime();
             if (PRINT_HTTP_LOG) {
-                 //LogUtils.d(String.format("发送请求 %s 结果 %s", request.url(), request.headers()));
+                //LogUtils.d(String.format("发送请求 %s 结果 %s", request.url(), request.headers()));
             }
 
             Response response = chain.proceed(request);
 
             if (PRINT_HTTP_LOG) {
                 long t2 = System.nanoTime();
-                LogUtils.d(String.format("收到响应请求 %s %.1fms", response.request().url(), (t2 - t1) / 1e6d));
+                LogUtils.d(String.format("响应请求 %s %.1fms", response.request().url(), (t2 - t1) / 1e6d));
                 //LogUtils.d(String.format("收到响应请求 %s %.1fms%n%s",
                 //        response.request().url(), (t2 - t1) / 1e6d, response.headers()));
             }

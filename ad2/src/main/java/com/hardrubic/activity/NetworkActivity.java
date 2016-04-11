@@ -1,16 +1,13 @@
 package com.hardrubic.activity;
 
 import ad2.hardrubic.com.androiddemo20.R;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
-
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-
 import com.hardrubic.Constants;
 import com.hardrubic.entity.db.Project;
 import com.hardrubic.entity.db.Team;
@@ -21,26 +18,22 @@ import com.hardrubic.entity.response.UploadPhotoResponse;
 import com.hardrubic.util.LogUtils;
 import com.hardrubic.util.MD5Utils;
 import com.hardrubic.util.ToastUtil;
-import com.hardrubic.util.network.PreferencesUtils;
-import com.hardrubic.util.network.entity.HttpDownloadResult;
 import com.hardrubic.util.network.HttpException;
 import com.hardrubic.util.network.HttpManager;
 import com.hardrubic.util.network.HttpService;
-import com.hardrubic.util.network.SyncExecutorServiceUtil;
+import com.hardrubic.util.network.PreferencesUtils;
 import com.hardrubic.util.network.entity.HttpDownloadInfo;
-
+import com.hardrubic.util.network.entity.HttpDownloadResult;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import rx.Observable;
-import rx.Subscriber;
 import rx.functions.Action1;
-import rx.schedulers.Schedulers;
 
 public class NetworkActivity extends TitleActivity {
     private Context mContext;
     private String token;
+    private String auth;
+    private String msg = "";
     private HttpDownloadResult downloadFileInfo;
 
     private TextView tv_token;
@@ -59,7 +52,7 @@ public class NetworkActivity extends TitleActivity {
 
         tv_token = (TextView) findViewById(R.id.tv_token);
         token = PreferencesUtils.getInstance().getString("token");
-        if(!TextUtils.isEmpty(token)){
+        if (!TextUtils.isEmpty(token)) {
             tv_token.setText(token);
             tv_token.setVisibility(View.VISIBLE);
         }
@@ -79,24 +72,24 @@ public class NetworkActivity extends TitleActivity {
         String username = "htwy";
         String password = "haitou123";
 
-        HttpService.applyLoginIn(username, password, new HttpManager.HttpServiceCallback() {
+        HttpService.applyLoginIn(username, password).subscribe(new Action1<LoginResponse>() {
             @Override
-            public <T> void onNext(T result) {
-                LoginResponse response = (LoginResponse) result;
+            public void call(LoginResponse response) {
                 if (response.getResult() == Constants.RESPOND_RESULT_OK) {
                     token = response.getData().getToken();
                     tv_token.setText(token);
                     tv_token.setVisibility(View.VISIBLE);
-                    PreferencesUtils.getInstance().putString("token",token);
+                    PreferencesUtils.getInstance().putString("token", token);
                     ToastUtil.longShow(mContext, "登陆成功");
                 } else {
                     ToastUtil.longShow(mContext, response.getMessage());
                 }
             }
-
+        }, new Action1<Throwable>() {
             @Override
-            public void onFailure(HttpException e) {
-                ToastUtil.longShow(mContext, e.getMessage());
+            public void call(Throwable throwable) {
+                throwable.printStackTrace();
+                ToastUtil.longShow(mContext, throwable.getMessage());
             }
         });
     }
@@ -185,34 +178,47 @@ public class NetworkActivity extends TitleActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String msg = "";
-                try {
-                    //获取上传凭证
-                    UploadAuthResponse uploadAuthResponse = HttpService.applyUploadAuth(token);
-                    String auth = null;
-                    if (uploadAuthResponse.getResult() == Constants.RESPOND_RESULT_OK) {
-                        auth = uploadAuthResponse.getData().getUpload_auth();
-                    } else {
-                        msg = uploadAuthResponse.getMessage();
-                    }
-
-                    if (!TextUtils.isEmpty(auth)) {
-                        UploadPhotoResponse response = HttpService.applyUploadPhoto(token, auth, md5, projectId, file);
+                //获取上传凭证
+                HttpService.applyUploadAuth(token).subscribe(new Action1<UploadAuthResponse>() {
+                    @Override
+                    public void call(UploadAuthResponse response) {
                         if (response.getResult() == Constants.RESPOND_RESULT_OK) {
-                            msg = "上传文件成功";
+                            auth = response.getData().getUpload_auth();
                         } else {
                             msg = response.getMessage();
                         }
                     }
-                } catch (HttpException e) {
-                    e.printStackTrace();
-                    msg = e.getMessage();
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable e) {
+                        e.printStackTrace();
+                        msg = e.getMessage();
+                    }
+                });
+
+                //上传图片
+                if (!TextUtils.isEmpty(auth)) {
+                    HttpService.applyUploadPhoto(token, auth, md5, projectId, file).subscribe(new Action1<UploadPhotoResponse>() {
+                        @Override
+                        public void call(UploadPhotoResponse response) {
+                            if (response.getResult() == Constants.RESPOND_RESULT_OK) {
+                                msg = "上传文件成功";
+                            } else {
+                                msg = response.getMessage();
+                            }
+                        }
+                    }, new Action1<Throwable>() {
+                        @Override
+                        public void call(Throwable e) {
+                            e.printStackTrace();
+                            msg = e.getMessage();
+                        }
+                    });
                 }
-                final String finalMsg = msg;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ToastUtil.longShow(mContext, finalMsg);
+                        ToastUtil.longShow(mContext, msg);
                     }
                 });
             }
@@ -223,47 +229,26 @@ public class NetworkActivity extends TitleActivity {
      * project列表
      */
     private void pullProjectList() {
-        Observable.create(new Observable.OnSubscribe<String>() {
+        HttpService.applyProjectList(token).subscribe(new Action1<ProjectListResponse>() {
             @Override
-            public void call(Subscriber<? super String> subscriber) {
-                LogUtils.d("project列表线程:" + Thread.currentThread().getId());
-
-                List<Long> idList = new ArrayList<>();
-                try {
-                    ProjectListResponse response = HttpService.applyProjectList(token);
-                    if (response.getResult() != Constants.RESPOND_RESULT_OK) {
-                        throw new HttpException(ERROR_CODE_E001);
-                    }
-
+            public void call(ProjectListResponse response) {
+                if (response.getResult() == Constants.RESPOND_RESULT_OK) {
                     List<Project> projectList = response.getData().getProjects();
                     List<Team> teamList = response.getData().getTeams();
                     int projectSize = projectList == null ? 0 : projectList.size();
                     int teamSize = teamList == null ? 0 : teamList.size();
                     LogUtils.d("同步项目成功，数量：projectList_" + projectSize + " teamList_" + teamSize);
-
-                    for (Project project : projectList) {
-                        idList.add(project.getId());
-                    }
-                } catch (HttpException e) {
-                    subscriber.onError(e);
+                } else {
+                    ToastUtil.longShow(mContext, response.getMessage());
                 }
-
-                subscriber.onNext(TextUtils.join(",", idList));
             }
-        })
-                .subscribeOn(Schedulers.from(SyncExecutorServiceUtil.getFixedThreadPool()))
-                .observeOn(Schedulers.newThread())
-                .subscribe(new Action1<String>() {
-                    @Override
-                    public void call(String o) {
-                        LogUtils.d("onNext");
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        throwable.printStackTrace();
-                    }
-                });
+        }, new Action1<Throwable>() {
+            @Override
+            public void call(Throwable throwable) {
+                throwable.printStackTrace();
+                ToastUtil.longShow(mContext, throwable.getMessage());
+            }
+        });
     }
 
 }

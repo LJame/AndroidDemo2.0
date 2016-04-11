@@ -25,7 +25,7 @@ public class HttpUtil {
             path.append("?");
             path.append(url.getQuery());
         }
-        String urlPath = path.deleteCharAt(0).toString();
+        String urlPath = path.toString();
 
         Method[] methodArray = HttpServiceRest.class.getMethods();
         Method retMethod = null;
