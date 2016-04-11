@@ -62,7 +62,7 @@ public interface HttpServiceRest {
      */
     String URL_UPLOAD_IMAGE = "/v2/api/project/report_image";
 
-    @Multipart
+    @FormUrlEncoded
     @POST(URL_UPLOAD_IMAGE)
-    Call<UploadPhotoResponse> doUploadImage(@PartMap TreeMap<String, String> paramMap, @PartMap TreeMap<String, RequestBody> fileMap);
+    Call<UploadPhotoResponse> doUploadImage(@FieldMap TreeMap<String, String> paramMap, @FieldMap TreeMap<String, RequestBody> fileMap);
 }
