@@ -25,11 +25,17 @@ import com.hardrubic.util.network.PreferencesUtils;
 import com.hardrubic.util.network.SyncExecutorServiceUtil;
 import com.hardrubic.util.network.entity.HttpDownloadResult;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 public class NetworkActivity extends TitleActivity {
     private Context mContext;
@@ -252,21 +258,6 @@ public class NetworkActivity extends TitleActivity {
     }
 
     /**
-     * 同步
-     */
-    @OnClick(R.id.tv_sync_all)
-    void clickSyncAll() {
-        if (TextUtils.isEmpty(token)) {
-            ToastUtil.longShow(mContext, "请先登陆");
-            return;
-        }
-
-        LogUtils.d("主线程:" + Thread.currentThread().getId());
-
-        pullProjectList();
-    }
-
-    /**
      * project列表
      */
     private void pullProjectList() {
@@ -290,6 +281,137 @@ public class NetworkActivity extends TitleActivity {
                 ToastUtil.longShow(mContext, throwable.getMessage());
             }
         });
+    }
+
+    /**
+     * 同步
+     */
+    @OnClick(R.id.tv_sync_all)
+    void clickSyncAll() {
+        if (TextUtils.isEmpty(token)) {
+            ToastUtil.longShow(mContext, "请先登陆");
+            return;
+        }
+
+        //LogUtils.d("主线程:" + Thread.currentThread().getId());
+
+        //pullProjectList();
+
+        createData();
+    }
+
+    class Data {
+        List<Integer> numList;
+        List<Character> letterList;
+    }
+
+    private void createData() {
+        LogUtils.d("主线程:" + Thread.currentThread().getId());
+        Observable.create(new Observable.OnSubscribe<Data>() {
+
+            @Override
+            public void call(Subscriber<? super Data> subscriber) {
+                LogUtils.d("生成数据线程-->" + Thread.currentThread().getId());
+                List<Integer> numList = new ArrayList<>();
+                for (int i = 0; i < 30; i++) {
+                    numList.add(i);
+                }
+                List<Character> letterList = new ArrayList<>();
+                char letter = 'A';
+                for (int i = 0; i < 26; i++) {
+                    letterList.add((char) (letter + i));
+                }
+                Data data = new Data();
+                data.numList = numList;
+                data.letterList = letterList;
+                subscriber.onNext(data);
+            }
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Data>() {
+                    @Override
+                    public void call(final Data data) {
+                        LogUtils.d("生成数据成功-->" + Thread.currentThread().getId());
+                        runAtConcurrence(data);
+                    }
+                });
+    }
+
+    private void runAtConcurrence(final Data data) {
+        Observable.create(new Observable.OnSubscribe<Data>() {
+
+            @Override
+            public void call(Subscriber<? super Data> subscriber) {
+                LogUtils.d("并发管理线程-->" + Thread.currentThread().getId());
+                CountDownLatch latch = new CountDownLatch(2);
+                printNum(latch, data.numList);
+                printLetter(latch, data.letterList);
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    subscriber.onError(e);
+                }
+                subscriber.onNext(data);
+            }
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Data>() {
+                    @Override
+                    public void call(Data data) {
+                        LogUtils.d("完成字母数字并发打印-->" + Thread.currentThread().getId());
+                        printEnd();
+                    }
+                });
+    }
+
+    private void printNum(final CountDownLatch latch, List<Integer> numList) {
+        Observable.from(numList)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(Schedulers.immediate())
+                .doOnNext(new Action1<Integer>() {
+                    @Override
+                    public void call(Integer integer) {
+                        LogUtils.d("打印:" + integer + " 线程-->" + Thread.currentThread().getId());
+                    }
+                })
+                .doOnCompleted(new Action0() {
+                    @Override
+                    public void call() {
+                        LogUtils.d("完成数字打印:" + Thread.currentThread().getId());
+                        latch.countDown();
+                    }
+                }).subscribe();
+    }
+
+    private void printLetter(final CountDownLatch latch, List<Character> charList) {
+        Observable.from(charList)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(Schedulers.immediate())
+                .doOnNext(new Action1<Character>() {
+                    @Override
+                    public void call(Character character) {
+                        LogUtils.d("打印:" + character + " 线程-->" + Thread.currentThread().getId());
+                    }
+                })
+                .doOnCompleted(new Action0() {
+                    @Override
+                    public void call() {
+                        LogUtils.d("完成字母打印:" + Thread.currentThread().getId());
+                        latch.countDown();
+                    }
+                }).subscribe();
+    }
+
+    private void printEnd() {
+        Observable.just("结束啦")
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        LogUtils.d(s + "-->" + Thread.currentThread().getId());
+                    }
+                });
     }
 
 }
