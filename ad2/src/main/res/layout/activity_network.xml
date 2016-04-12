@@ -33,7 +33,7 @@
             android:text="登陆"/>
 
         <TextView
-            android:id="@+id/tv_sync_all"
+            android:id="@+id/tv_download_more_file"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
@@ -44,10 +44,10 @@
             android:background="@color/colorPrimary"
             android:textColor="@color/white"
             android:textSize="24sp"
-            android:text="一键同步"/>
+            android:text="多文件下载"/>
 
         <TextView
-            android:id="@+id/tv_download_file"
+            android:id="@+id/tv_download_large_file"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
@@ -58,7 +58,15 @@
             android:background="@color/colorPrimary"
             android:textColor="@color/white"
             android:textSize="24sp"
-            android:text="文件下载"/>
+            android:text="大文件下载"
+            android:visibility="gone"/>
+        <ProgressBar
+            android:id="@+id/pb_download"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progress="0"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/tv_upload_file"
@@ -73,6 +81,20 @@
             android:textColor="@color/white"
             android:textSize="24sp"
             android:text="文件上传"/>
+
+        <TextView
+            android:id="@+id/tv_sync_all"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:text="一键同步"/>
 
     </LinearLayout>
 

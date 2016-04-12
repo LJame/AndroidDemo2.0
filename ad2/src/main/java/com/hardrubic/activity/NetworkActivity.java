@@ -5,7 +5,9 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import com.hardrubic.Constants;
@@ -18,15 +20,15 @@ import com.hardrubic.entity.response.UploadPhotoResponse;
 import com.hardrubic.util.LogUtils;
 import com.hardrubic.util.MD5Utils;
 import com.hardrubic.util.ToastUtil;
-import com.hardrubic.util.network.HttpException;
-import com.hardrubic.util.network.HttpManager;
 import com.hardrubic.util.network.HttpService;
 import com.hardrubic.util.network.PreferencesUtils;
-import com.hardrubic.util.network.entity.HttpDownloadInfo;
+import com.hardrubic.util.network.SyncExecutorServiceUtil;
 import com.hardrubic.util.network.entity.HttpDownloadResult;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import rx.functions.Action1;
 
 public class NetworkActivity extends TitleActivity {
@@ -35,8 +37,13 @@ public class NetworkActivity extends TitleActivity {
     private String auth;
     private String msg = "";
     private HttpDownloadResult downloadFileInfo;
+    private AtomicInteger successSize = new AtomicInteger(0);
+    private AtomicInteger failSize = new AtomicInteger(0);
 
-    private TextView tv_token;
+    @Bind(R.id.tv_token)
+    TextView tv_token;
+    @Bind(R.id.pb_download)
+    ProgressBar pb_download;
 
     /**
      * 同步项目接口
@@ -50,7 +57,6 @@ public class NetworkActivity extends TitleActivity {
         mContext = this;
         ButterKnife.bind(this);
 
-        tv_token = (TextView) findViewById(R.id.tv_token);
         token = PreferencesUtils.getInstance().getString("token");
         if (!TextUtils.isEmpty(token)) {
             tv_token.setText(token);
@@ -95,66 +101,86 @@ public class NetworkActivity extends TitleActivity {
     }
 
     /**
-     * 同步
+     * 多文件下载 三线程,每线程1000图片,196.125s;每个线程一张,193.564s
      */
-    @OnClick(R.id.tv_sync_all)
-    void clickSyncAll() {
-        if (TextUtils.isEmpty(token)) {
-            ToastUtil.longShow(mContext, "请先登陆");
-            return;
-        }
+    @OnClick(R.id.tv_download_more_file)
+    void clickDownloadMoreFile() {
+        final String path = Constants.APP_IMG_FILE_PATH;
+        final int num = 1;
 
-        LogUtils.d("主线程:" + Thread.currentThread().getId());
+        final ExecutorService executorService = SyncExecutorServiceUtil.getFixedThreadPool();
+        final CountDownLatch latch = new CountDownLatch(num);
+        long time1 = System.currentTimeMillis();
 
-        pullProjectList();
-    }
-
-    /**
-     * 文件下载
-     */
-    @OnClick(R.id.tv_download_file)
-    void clickDownloadFile() {
+        /*
         final List<HttpDownloadInfo> infoList = new ArrayList<>();
-        String path = Constants.APP_IMG_FILE_PATH;
-        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/8c1e3a8f45076c68a9b9ff3e6c0ff75d..jpg", path));
-        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/db6cbb49672b9e0fd3336ca34c96b30d..jpg", path));
-        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/90cd56facb610f6039daf45923f2698d..jpg", path));
-        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/11e7b19623e41fd198500610403b64f1..jpg", path));
-        infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path));
+        for (int i = 0; i < 600; i++) {
+            infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/8c1e3a8f45076c68a9b9ff3e6c0ff75d..jpg", path));
+            infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/db6cbb49672b9e0fd3336ca34c96b30d..jpg", path));
+            infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/90cd56facb610f6039daf45923f2698d..jpg", path));
+            infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/11e7b19623e41fd198500610403b64f1..jpg", path));
+            infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path));
+        }
+        */
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                LogUtils.d("开始下载");
-                List<HttpDownloadResult> resultList = null;
-                try {
-                    resultList = HttpManager.getInstance().download(infoList);
-                } catch (HttpException e) {
-                    e.printStackTrace();
+                for (int i = 0; i < num; i++) {
+                    HttpService.applyDownloadPhoto("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path, executorService).subscribe(new Action1<HttpDownloadResult>() {
+                        @Override
+                        public void call(HttpDownloadResult result) {
+                            if (result.getResult()) {
+                                successSize.incrementAndGet();
+                                downloadFileInfo = result;
+                            } else {
+                                failSize.incrementAndGet();
+                                LogUtils.w(result.getUrl() + " ------ " + result.getException().getMessage());
+                            }
+                            latch.countDown();
+                        }
+                    }, new Action1<Throwable>() {
+                        @Override
+                        public void call(Throwable throwable) {
+                            ToastUtil.longShow(mContext, throwable.getMessage());
+                            LogUtils.w(throwable.getMessage());
+                            latch.countDown();
+                        }
+                    });
                 }
-
-                int successSize = 0;
-                int failSize = 0;
-                for (HttpDownloadResult result : resultList) {
-                    if (result.getResult()) {
-                        successSize++;
-                        downloadFileInfo = result;
-                    } else {
-                        failSize++;
-                        LogUtils.w(result.getUrl() + " ------ " + result.getException().getMessage());
-                    }
-                }
-
-                final int finalSuccessSize = successSize;
-                final int finalFailSize = failSize;
-                NetworkActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ToastUtil.longShow(mContext, "下载完毕,成功" + finalSuccessSize + ",失败" + finalFailSize);
-                    }
-                });
             }
         }).start();
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        LogUtils.d("完成所有下载");
+        LogUtils.d((System.currentTimeMillis() - time1) + "ms");
+    }
+
+    /**
+     * 大文件下载
+     */
+    @OnClick(R.id.tv_download_large_file)
+    void clickDownloadLargeFile() {
+        String downloadUrl = "http://14.215.93.23/apk.r1.market.hiapk.com/data/upload/apkres/2016/3_1/11/com.ilovephone.dxzs.baidu_112704.apk";
+
+        /*
+        Call<ResponseBody> call = service.download(downloadUrl);
+        retrofit2.Response<ResponseBody> retrofitResponse = call.execute();
+        if (retrofitResponse.isSuccessful()) {
+            //下载成功
+            result.setSavePath(HttpUtil.saveFileAtDisk(retrofitResponse.body(), path));
+            resultList.add(result);
+            result.setResult(true);
+        } else {
+            //ResponseBody errorBody = retrofitResponse.errorBody();
+            throw new Exception(retrofitResponse.message());
+        }
+        */
     }
 
     /**
@@ -223,6 +249,21 @@ public class NetworkActivity extends TitleActivity {
                 });
             }
         }).start();
+    }
+
+    /**
+     * 同步
+     */
+    @OnClick(R.id.tv_sync_all)
+    void clickSyncAll() {
+        if (TextUtils.isEmpty(token)) {
+            ToastUtil.longShow(mContext, "请先登陆");
+            return;
+        }
+
+        LogUtils.d("主线程:" + Thread.currentThread().getId());
+
+        pullProjectList();
     }
 
     /**

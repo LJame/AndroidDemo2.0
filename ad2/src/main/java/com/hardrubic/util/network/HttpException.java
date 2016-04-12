@@ -5,11 +5,11 @@ import android.text.TextUtils;
 /**
  * HTTP异常类
  */
-public class HttpException extends Throwable {
+public class HttpException extends Exception {
 
     private String code;   //错误码
     private String msg = "";  //错误信息
-    private Throwable originException; //原始错误Exception
+    private Exception originException; //原始错误Exception
 
     public HttpException(String code) {
         this(new Exception(), code, "");
@@ -19,11 +19,11 @@ public class HttpException extends Throwable {
         this(new Exception(msg), code, msg);
     }
 
-    public HttpException(Throwable e, String code) {
+    public HttpException(Exception e, String code) {
         this(e, code, e.getMessage());
     }
 
-    public HttpException(Throwable e, String code, String msg) {
+    public HttpException(Exception e, String code, String msg) {
         this.originException = e;
         this.code = code;
         this.msg = msg;
