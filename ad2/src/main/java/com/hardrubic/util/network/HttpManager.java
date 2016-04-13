@@ -3,7 +3,6 @@ package com.hardrubic.util.network;
 import android.text.TextUtils;
 import com.hardrubic.Constants;
 import com.hardrubic.util.LogUtils;
-import com.hardrubic.util.network.entity.HttpDownloadResult;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -148,7 +147,7 @@ public class HttpManager {
     /**
      * 文件下载请求(同步)
      */
-    public Observable<HttpDownloadResult> download(final String urlStr, final String savePath, boolean isSync) {
+    public Observable<String> download(final String urlStr, final String savePath, boolean isSync) {
         if (isSync) {
             return this.download(urlStr, savePath, Schedulers.immediate(), Schedulers.immediate());
         } else {
@@ -159,17 +158,17 @@ public class HttpManager {
     /**
      * 文件下载请求
      */
-    public Observable<HttpDownloadResult> download(final String urlStr, final String savePath, Scheduler subscribeScheduler) {
+    public Observable<String> download(final String urlStr, final String savePath, Scheduler subscribeScheduler) {
         return this.download(urlStr, savePath, subscribeScheduler, AndroidSchedulers.mainThread());
     }
 
     /**
      * 文件下载请求
      */
-    public Observable<HttpDownloadResult> download(final String urlStr, final String savePath, Scheduler subscribeScheduler, Scheduler observeScheduler) {
-        Observable observable = Observable.create(new Observable.OnSubscribe<HttpDownloadResult>() {
+    public Observable<String> download(final String urlStr, final String savePath, Scheduler subscribeScheduler, Scheduler observeScheduler) {
+        return Observable.create(new Observable.OnSubscribe<String>() {
             @Override
-            public void call(Subscriber<? super HttpDownloadResult> subscriber) {
+            public void call(Subscriber<? super String> subscriber) {
                 if (TextUtils.isEmpty(urlStr)) {
                     subscriber.onError(new HttpException(HttpSupport.ERROR_CODE_H100));
                 }
@@ -177,9 +176,41 @@ public class HttpManager {
                     subscriber.onError(new HttpException(HttpSupport.ERROR_CODE_H105));
                 }
 
-                HttpDownloadResult result = new HttpDownloadResult();
-                result.setUrl(urlStr);
-                result.setTargetPath(savePath);
+                try {
+                    String diskPath = "";
+                    URL url = createUrl(urlStr);
+                    Call<ResponseBody> call = service.download(urlStr);
+                    retrofit2.Response<ResponseBody> retrofitResponse = call.execute();
+                    if (retrofitResponse.isSuccessful()) {
+                        //下载成功
+                        diskPath = HttpUtil.saveFileAtDisk(retrofitResponse.body(), savePath);
+                    } else {
+                        //ResponseBody errorBody = retrofitResponse.errorBody();
+                        subscriber.onError(new Exception(urlStr + "下载错误:" + retrofitResponse.message()));
+                    }
+                    subscriber.onNext(diskPath);
+                } catch (Exception e) {
+                    //下载失败
+                    //e.printStackTrace();
+                    subscriber.onError(new HttpException(e, HttpSupport.ERROR_CODE_H108));
+                }
+            }
+        }).subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler);
+    }
+
+    /*
+    public Observable<String> downloadLarge(final String urlStr, final String savePath, Scheduler subscribeScheduler, Scheduler observeScheduler) {
+        return Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                if (TextUtils.isEmpty(urlStr)) {
+                    subscriber.onError(new HttpException(HttpSupport.ERROR_CODE_H100));
+                }
+                if (TextUtils.isEmpty(savePath)) {
+                    subscriber.onError(new HttpException(HttpSupport.ERROR_CODE_H105));
+                }
+
                 try {
                     URL url = createUrl(urlStr);
                     Call<ResponseBody> call = service.download(urlStr);
@@ -193,54 +224,15 @@ public class HttpManager {
                         result.setException(new Exception(retrofitResponse.message()));
                         //ResponseBody errorBody = retrofitResponse.errorBody();
                     }
-                    subscriber.onNext(result);
+                    //subscriber.onNext(result);
                 } catch (Exception e) {
                     //下载失败
                     e.printStackTrace();
-                    result.setResult(false);
-                    result.setException(e);
                     subscriber.onError(new HttpException(e, HttpSupport.ERROR_CODE_H108));
                 }
             }
         }).subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler);
-
-        return observable;
-    }
-
-    /*
-    public Observable<ResponseBody> testDownloadLargeFile(final String urlStr) {
-        return Observable.create(new Observable.OnSubscribe<ResponseBody>() {
-            @Override
-            public void call(Subscriber<? super ResponseBody> subscriber) {
-                Call<ResponseBody> call = service.download(urlStr);
-                retrofit2.Response<ResponseBody> retrofitResponse = null;
-                try {
-                    retrofitResponse = call.execute();
-                } catch (IOException e) {
-                    subscriber.onError(e);
-                }
-                if (retrofitResponse.isSuccessful()) {
-                    //下载成功
-                    result.setSavePath(HttpUtil.saveFileAtDisk(retrofitResponse.body(), path));
-                } else {
-                    subscriber.onError(new HttpException(ERROR_CODE_H108, retrofitResponse.message()));
-                }
-            }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-
-        Call<ResponseBody> call = service.download(urlStr);
-        retrofit2.Response<ResponseBody> retrofitResponse = call.execute();
-        if (retrofitResponse.isSuccessful()) {
-            //下载成功
-            result.setSavePath(HttpUtil.saveFileAtDisk(retrofitResponse.body(), path));
-            resultList.add(result);
-            result.setResult(true);
-        } else {
-            //ResponseBody errorBody = retrofitResponse.errorBody();
-            throw new Exception(retrofitResponse.message());
-        }
     }
     */
 

@@ -23,13 +23,11 @@ import com.hardrubic.util.ToastUtil;
 import com.hardrubic.util.network.HttpService;
 import com.hardrubic.util.network.PreferencesUtils;
 import com.hardrubic.util.network.SyncExecutorServiceUtil;
-import com.hardrubic.util.network.entity.HttpDownloadResult;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -42,9 +40,7 @@ public class NetworkActivity extends TitleActivity {
     private String token;
     private String auth;
     private String msg = "";
-    private HttpDownloadResult downloadFileInfo;
-    private AtomicInteger successSize = new AtomicInteger(0);
-    private AtomicInteger failSize = new AtomicInteger(0);
+    private String downloadFilePath;
 
     @Bind(R.id.tv_token)
     TextView tv_token;
@@ -133,22 +129,16 @@ public class NetworkActivity extends TitleActivity {
             @Override
             public void run() {
                 for (int i = 0; i < num; i++) {
-                    HttpService.applyDownloadPhoto("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path, executorService).subscribe(new Action1<HttpDownloadResult>() {
+                    HttpService.applyDownloadPhoto("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jp", path, executorService).subscribe(new Action1<String>() {
                         @Override
-                        public void call(HttpDownloadResult result) {
-                            if (result.getResult()) {
-                                successSize.incrementAndGet();
-                                downloadFileInfo = result;
-                            } else {
-                                failSize.incrementAndGet();
-                                LogUtils.w(result.getUrl() + " ------ " + result.getException().getMessage());
-                            }
+                        public void call(String path) {
+                            downloadFilePath = path;
                             latch.countDown();
                         }
                     }, new Action1<Throwable>() {
                         @Override
                         public void call(Throwable throwable) {
-                            ToastUtil.longShow(mContext, throwable.getMessage());
+                            //ToastUtil.longShow(mContext, throwable.getMessage());
                             LogUtils.w(throwable.getMessage());
                             latch.countDown();
                         }
@@ -194,7 +184,7 @@ public class NetworkActivity extends TitleActivity {
      */
     @OnClick(R.id.tv_upload_file)
     void clickUploadFile() {
-        if (downloadFileInfo == null) {
+        if (TextUtils.isEmpty(downloadFilePath)) {
             ToastUtil.longShow(mContext, "没有待上传文件");
             return;
         }
@@ -204,7 +194,7 @@ public class NetworkActivity extends TitleActivity {
             return;
         }
 
-        final File file = new File(downloadFileInfo.getSavePath());
+        final File file = new File(downloadFilePath);
         final String md5 = MD5Utils.calculate(file);
         final Long projectId = 12l;
         new Thread(new Runnable() {
@@ -328,13 +318,13 @@ public class NetworkActivity extends TitleActivity {
             }
         }).subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Data>() {
+                .doOnNext(new Action1<Data>() {
                     @Override
-                    public void call(final Data data) {
+                    public void call(Data data) {
                         LogUtils.d("生成数据成功-->" + Thread.currentThread().getId());
                         runAtConcurrence(data);
                     }
-                });
+                }).subscribe();
     }
 
     private void runAtConcurrence(final Data data) {

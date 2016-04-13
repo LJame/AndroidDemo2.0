@@ -6,7 +6,6 @@ import com.hardrubic.entity.response.LoginResponse;
 import com.hardrubic.entity.response.ProjectListResponse;
 import com.hardrubic.entity.response.UploadAuthResponse;
 import com.hardrubic.entity.response.UploadPhotoResponse;
-import com.hardrubic.util.network.entity.HttpDownloadResult;
 import java.io.File;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
@@ -15,7 +14,7 @@ import rx.schedulers.Schedulers;
 
 public class HttpService {
 
-    public static Observable<HttpDownloadResult> applyDownloadPhoto(String urlStr, String savePath, ExecutorService executorService) {
+    public static Observable<String> applyDownloadPhoto(String urlStr, String savePath, ExecutorService executorService) {
         return HttpManager.getInstance().download(urlStr, savePath, Schedulers.from(executorService), Schedulers.immediate());
     }
 
