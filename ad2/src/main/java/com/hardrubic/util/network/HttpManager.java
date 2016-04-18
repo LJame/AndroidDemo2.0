@@ -21,6 +21,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
 import rx.Scheduler;
@@ -67,7 +68,7 @@ public class HttpManager {
                 .baseUrl(Constants.HOST)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
-                //.addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .build();
         service = retrofit.create(HttpServiceRest.class);
     }
@@ -102,18 +103,25 @@ public class HttpManager {
     }
 
     /**
-     * 普通请求
+     * 普通请求(默认使用io线程进行异步)
+     */
+    public <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap) {
+        return this.send(urlStr, paramMap, Schedulers.io());
+    }
+
+    /**
+     * 普通请求(可同步)
      */
     public <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap, boolean isSync) {
         if (isSync) {
             return this.send(urlStr, paramMap, Schedulers.immediate(), Schedulers.immediate());
         } else {
-            return this.send(urlStr, paramMap, Schedulers.io());
+            return this.send(urlStr, paramMap);
         }
     }
 
     /**
-     * 普通请求
+     * 普通请求(可指定执行异步的线程,回到主线程)
      */
     public <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap, Scheduler subscribeScheduler) {
         return this.send(urlStr, paramMap, subscribeScheduler, AndroidSchedulers.mainThread());
