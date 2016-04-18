@@ -1,45 +1,33 @@
 package com.hardrubic.entity.response;
 
 
-public class LoginResponse extends CommonResponse {
+public class LoginResponse{
 
-    private Data data;
+    private String name;
+    private int uid;        //用户ID
+    private String token;
 
-    public class Data {
-        private String name;
-        private int uid;        //用户ID
-        private String token;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public int getUid() {
-            return uid;
-        }
-
-        public void setUid(int uid) {
-            this.uid = uid;
-        }
-
-        public String getToken() {
-            return token;
-        }
-
-        public void setToken(String token) {
-            this.token = token;
-        }
+    public String getName() {
+        return name;
     }
 
-    public Data getData() {
-        return data;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public void setData(Data data) {
-        this.data = data;
+    public int getUid() {
+        return uid;
+    }
+
+    public void setUid(int uid) {
+        this.uid = uid;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

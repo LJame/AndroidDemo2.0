@@ -1,11 +1,13 @@
 package com.hardrubic.entity.response;
 
 /**
- * 响应的统一字段
+ * newhttp 统一Response
+ * @param <T>
  */
-public class CommonResponse {
+public class HttpResponse<T>{
     private int result;
     private String message;
+    private T data;
 
     public int getResult() {
         return result;
@@ -21,5 +23,13 @@ public class CommonResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
     }
 }

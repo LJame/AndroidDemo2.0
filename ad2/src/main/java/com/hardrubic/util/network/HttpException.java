@@ -5,7 +5,7 @@ import android.text.TextUtils;
 /**
  * HTTP异常类
  */
-public class HttpException extends Exception {
+public class HttpException extends RuntimeException {
 
     private String code;   //错误码
     private String msg = "";  //错误信息
@@ -49,7 +49,7 @@ public class HttpException extends Exception {
         } else {
             builder.append(originException.getMessage());
         }
-        builder.append("-错误码").append(code);
+        builder.append("-").append(code);
         return builder.toString();
     }
 }

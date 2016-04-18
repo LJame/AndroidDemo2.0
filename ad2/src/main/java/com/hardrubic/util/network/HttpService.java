@@ -14,8 +14,8 @@ import rx.schedulers.Schedulers;
 
 public class HttpService {
 
-    public static Observable<String> applyDownloadPhoto(String urlStr, String savePath, ExecutorService executorService) {
-        return HttpManager.getInstance().download(urlStr, savePath, Schedulers.from(executorService), Schedulers.immediate());
+    public static Observable<HttpDownloadResult> applyDownloadPhoto(String urlStr, String savePath, ExecutorService executorService) {
+        return HttpManager.getInstance().download(urlStr, savePath, Schedulers.from(executorService));
     }
 
     /**
