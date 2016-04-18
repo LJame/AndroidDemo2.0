@@ -1,8 +1,11 @@
 package com.hardrubic.util.network;
 
 import android.text.TextUtils;
+
 import com.hardrubic.Constants;
+import com.hardrubic.entity.response.HttpResponse;
 import com.hardrubic.util.LogUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -12,6 +15,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -27,6 +31,8 @@ import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
+import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 public class HttpManager {
@@ -42,9 +48,9 @@ public class HttpManager {
     /**
      * HTTP超时
      */
-    private static final int HTTP_CONNECT_TIMEOUT = 1000;
-    private static final int HTTP_READ_TIMEOUT = 1000 * 3;
-    private static final int HTTP_WRITE_TIMEOUT = 1000 * 3;
+    private static final int HTTP_CONNECT_TIMEOUT = 10;
+    //private static final int HTTP_READ_TIMEOUT = 10;
+    //private static final int HTTP_WRITE_TIMEOUT = 10;
 
     private HttpManager() {
         init();
@@ -60,9 +66,9 @@ public class HttpManager {
     private void init() {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(new LoggingInterceptor())
-                .connectTimeout(HTTP_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
-                .readTimeout(HTTP_READ_TIMEOUT, TimeUnit.MILLISECONDS)
-                .writeTimeout(HTTP_WRITE_TIMEOUT, TimeUnit.MILLISECONDS)
+                .connectTimeout(HTTP_CONNECT_TIMEOUT, TimeUnit.SECONDS)
+                //.readTimeout(HTTP_READ_TIMEOUT, TimeUnit.SECONDS)
+                //.writeTimeout(HTTP_WRITE_TIMEOUT, TimeUnit.SECONDS)
                 .build();
         retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.HOST)
@@ -131,14 +137,14 @@ public class HttpManager {
      * 普通请求
      */
     private <T> Observable<T> send(final String urlStr, final TreeMap<String, String> paramMap, Scheduler subscribeScheduler, Scheduler observeScheduler) {
-        return Observable.create(new Observable.OnSubscribe<T>() {
+        return Observable.create(new Observable.OnSubscribe<HttpResponse<T>>() {
             @Override
-            public void call(Subscriber<? super T> subscriber) {
+            public void call(Subscriber<? super HttpResponse<T>> subscriber) {
                 try {
                     URL url = createUrl(urlStr);
                     Method method = createMethod(url);
-                    Call<T> call = (Call<T>) method.invoke(service, paramMap);
-                    retrofit2.Response<T> response = call.execute();
+                    Call<HttpResponse<T>> call = (Call<HttpResponse<T>>) method.invoke(service, paramMap);
+                    retrofit2.Response<HttpResponse<T>> response = call.execute();
                     subscriber.onNext(response.body());
                 } catch (HttpException e) {
                     e.printStackTrace();
@@ -148,35 +154,43 @@ public class HttpManager {
                     subscriber.onError(new HttpException(e, HttpSupport.ERROR_CODE_H104));
                 }
             }
-        }).subscribeOn(subscribeScheduler)
+        }).map(new HttpResponseFunc<T>())
+                .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler);
+    }
+
+    /**
+     * 文件下载请求
+     */
+    public Observable<HttpDownloadResult> download(final String urlStr, final String savePath) {
+        return this.download(urlStr, savePath, Schedulers.io());
     }
 
     /**
      * 文件下载请求(同步)
      */
-    public Observable<String> download(final String urlStr, final String savePath, boolean isSync) {
+    public Observable<HttpDownloadResult> download(final String urlStr, final String savePath, boolean isSync) {
         if (isSync) {
             return this.download(urlStr, savePath, Schedulers.immediate(), Schedulers.immediate());
         } else {
-            return this.download(urlStr, savePath, Schedulers.io());
+            return this.download(urlStr, savePath);
         }
     }
 
     /**
      * 文件下载请求
      */
-    public Observable<String> download(final String urlStr, final String savePath, Scheduler subscribeScheduler) {
+    public Observable<HttpDownloadResult> download(final String urlStr, final String savePath, Scheduler subscribeScheduler) {
         return this.download(urlStr, savePath, subscribeScheduler, AndroidSchedulers.mainThread());
     }
 
     /**
      * 文件下载请求
      */
-    public Observable<String> download(final String urlStr, final String savePath, Scheduler subscribeScheduler, Scheduler observeScheduler) {
-        return Observable.create(new Observable.OnSubscribe<String>() {
+    public Observable<HttpDownloadResult> download(final String urlStr, final String savePath, Scheduler subscribeScheduler, Scheduler observeScheduler) {
+        return Observable.create(new Observable.OnSubscribe<HttpDownloadResult>() {
             @Override
-            public void call(Subscriber<? super String> subscriber) {
+            public void call(final Subscriber<? super HttpDownloadResult> subscriber) {
                 if (TextUtils.isEmpty(urlStr)) {
                     subscriber.onError(new HttpException(HttpSupport.ERROR_CODE_H100));
                 }
@@ -189,14 +203,29 @@ public class HttpManager {
                     URL url = createUrl(urlStr);
                     Call<ResponseBody> call = service.download(urlStr);
                     retrofit2.Response<ResponseBody> retrofitResponse = call.execute();
+
+                    final HttpDownloadResult result = new HttpDownloadResult();
                     if (retrofitResponse.isSuccessful()) {
                         //下载成功
-                        diskPath = HttpUtil.saveFileAtDisk(retrofitResponse.body(), savePath);
+                        diskPath = HttpUtil.saveFileAtDisk(retrofitResponse.body(), savePath, new HttpUtil.IFileDownloadListener() {
+                            @Override
+                            public void onRefreshProgress(double per) {
+                                result.setPercent(per);
+                                result.setFinish(false);
+                                subscriber.onNext(result);
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                result.setFinish(true);
+                            }
+                        });
                     } else {
                         //ResponseBody errorBody = retrofitResponse.errorBody();
                         subscriber.onError(new Exception(urlStr + "下载错误:" + retrofitResponse.message()));
                     }
-                    subscriber.onNext(diskPath);
+                    result.setDiskPath(diskPath);
+                    subscriber.onNext(result);
                 } catch (Exception e) {
                     //下载失败
                     //e.printStackTrace();
@@ -206,43 +235,6 @@ public class HttpManager {
         }).subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler);
     }
-
-    /*
-    public Observable<String> downloadLarge(final String urlStr, final String savePath, Scheduler subscribeScheduler, Scheduler observeScheduler) {
-        return Observable.create(new Observable.OnSubscribe<String>() {
-            @Override
-            public void call(Subscriber<? super String> subscriber) {
-                if (TextUtils.isEmpty(urlStr)) {
-                    subscriber.onError(new HttpException(HttpSupport.ERROR_CODE_H100));
-                }
-                if (TextUtils.isEmpty(savePath)) {
-                    subscriber.onError(new HttpException(HttpSupport.ERROR_CODE_H105));
-                }
-
-                try {
-                    URL url = createUrl(urlStr);
-                    Call<ResponseBody> call = service.download(urlStr);
-                    retrofit2.Response<ResponseBody> retrofitResponse = call.execute();
-                    if (retrofitResponse.isSuccessful()) {
-                        //下载成功
-                        result.setResult(true);
-                        result.setSavePath(HttpUtil.saveFileAtDisk(retrofitResponse.body(), savePath));
-                    } else {
-                        result.setResult(false);
-                        result.setException(new Exception(retrofitResponse.message()));
-                        //ResponseBody errorBody = retrofitResponse.errorBody();
-                    }
-                    //subscriber.onNext(result);
-                } catch (Exception e) {
-                    //下载失败
-                    e.printStackTrace();
-                    subscriber.onError(new HttpException(e, HttpSupport.ERROR_CODE_H108));
-                }
-            }
-        }).subscribeOn(subscribeScheduler)
-                .observeOn(observeScheduler);
-    }
-    */
 
     /**
      * 上传文件请求
@@ -266,9 +258,9 @@ public class HttpManager {
      * 上传文件请求
      */
     public <T> Observable<T> upload(final String urlStr, final TreeMap<String, File> fileMap, final TreeMap<String, String> paramMap, Scheduler subscribeScheduler, Scheduler observeScheduler) {
-        return Observable.create(new Observable.OnSubscribe<T>() {
+        return Observable.create(new Observable.OnSubscribe<HttpResponse<T>>() {
             @Override
-            public void call(Subscriber<? super T> subscriber) {
+            public void call(Subscriber<? super HttpResponse<T>> subscriber) {
                 //判断文件是否存在
                 Collection<File> fileList = fileMap.values();
                 if (fileList == null || fileList.isEmpty()) {
@@ -291,8 +283,8 @@ public class HttpManager {
                 try {
                     URL url = createUrl(urlStr);
                     Method method = createMethod(url);
-                    Call<T> call = (Call<T>) method.invoke(service, paramMap, requestBodyTreeMap);
-                    retrofit2.Response<T> response = call.execute();
+                    Call<HttpResponse<T>> call = (Call<HttpResponse<T>>) method.invoke(service, paramMap, requestBodyTreeMap);
+                    retrofit2.Response<HttpResponse<T>> response = call.execute();
                     subscriber.onNext(response.body());
                 } catch (HttpException e) {
                     e.printStackTrace();
@@ -302,7 +294,8 @@ public class HttpManager {
                     subscriber.onError(new HttpException(e, HttpSupport.ERROR_CODE_H106));
                 }
             }
-        }).subscribeOn(subscribeScheduler)
+        }).map(new HttpResponseFunc<T>())
+                .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler);
     }
 
@@ -316,19 +309,35 @@ public class HttpManager {
 
             long t1 = System.nanoTime();
             if (PRINT_HTTP_LOG) {
-                //LogUtils.d(String.format("发送请求 %s 结果 %s", request.url(), request.headers()));
+                LogUtils.d(String.format("HTTP发送请求 %s %s", request.url(), request.method()));
             }
 
             Response response = chain.proceed(request);
 
             if (PRINT_HTTP_LOG) {
                 long t2 = System.nanoTime();
-                LogUtils.d(String.format("响应请求 %s %.1fms", response.request().url(), (t2 - t1) / 1e6d));
+                LogUtils.d(String.format("HTTP响应请求 %s %.1fms", response.request().url(), (t2 - t1) / 1e6d));
                 //LogUtils.d(String.format("收到响应请求 %s %.1fms%n%s",
                 //        response.request().url(), (t2 - t1) / 1e6d, response.headers()));
             }
 
             return response;
+        }
+    }
+
+    /**
+     * 统一处理Http的resultCode,并将Data部分剥离出来返回给subscriber
+     *
+     * @param <T>
+     */
+    private class HttpResponseFunc<T> implements Func1<HttpResponse<T>, T> {
+
+        @Override
+        public T call(HttpResponse<T> httpResponse) {
+            if (httpResponse.getResult() != Constants.RESPOND_RESULT_OK) {
+                throw new HttpException(HttpSupport.ERROR_CODE_H100, httpResponse.getMessage());
+            }
+            return httpResponse.getData();
         }
     }
 }

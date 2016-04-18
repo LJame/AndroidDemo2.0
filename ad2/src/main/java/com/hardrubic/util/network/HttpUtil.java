@@ -2,14 +2,20 @@ package com.hardrubic.util.network;
 
 
 import android.text.TextUtils;
+
+import com.hardrubic.util.LogUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
+
 import okhttp3.ResponseBody;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
@@ -63,6 +69,11 @@ public class HttpUtil {
      */
     public static String saveFileAtDisk(ResponseBody responseBody, String fileSavePath)
             throws Exception {
+        return saveFileAtDisk(responseBody, fileSavePath, null);
+    }
+
+    public static String saveFileAtDisk(ResponseBody responseBody, String fileSavePath, IFileDownloadListener listener)
+            throws Exception {
         File targetFile;
 
         if (fileSavePath.endsWith("/")) {
@@ -89,9 +100,21 @@ public class HttpUtil {
         FileOutputStream fileOutputStream = new FileOutputStream(targetFile);
         InputStream inputStream = responseBody.byteStream();
         byte[] buffer = new byte[1024 * 100];
-        int length;
-        while ((length = inputStream.read(buffer)) > 0) {
-            fileOutputStream.write(buffer, 0, length);
+        long totalLength = responseBody.contentLength();
+        long downloadFileLength = 0;
+        int currentLength;
+        double lastPer=0;
+        while ((currentLength = inputStream.read(buffer)) > 0) {
+            fileOutputStream.write(buffer, 0, currentLength);
+            downloadFileLength += currentLength;
+
+            BigDecimal b = new BigDecimal((double) downloadFileLength / totalLength);
+            double per = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            if (null != listener && lastPer != per) {
+                LogUtils.d("更新百分比：" + per);
+                listener.onRefreshProgress(per);
+            }
+            lastPer = per;
         }
 
         //close
@@ -101,6 +124,17 @@ public class HttpUtil {
         if (null != fileOutputStream) {
             fileOutputStream.close();
         }
+
+        if (null != listener) {
+            listener.onFinish();
+        }
+
         return targetFile.getAbsolutePath();
+    }
+
+    interface IFileDownloadListener {
+        void onRefreshProgress(double per);
+
+        void onFinish();
     }
 }
