@@ -3,7 +3,6 @@ package com.hardrubic.util.network;
 
 import com.hardrubic.Constants;
 import com.hardrubic.entity.response.LoginResponse;
-import com.hardrubic.entity.response.ProjectListResponse;
 import com.hardrubic.entity.response.UploadAuthResponse;
 import com.hardrubic.entity.response.UploadPhotoResponse;
 import java.io.File;
@@ -25,28 +24,17 @@ public class HttpService {
         TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("username", username);
         treeMap.put("password", password);
-        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap);
-    }
-
-    /**
-     * 4.1项目列表
-     */
-    public static Observable<ProjectListResponse> applyProjectList(String token) {
-        final TreeMap<String, String> treeMap = new TreeMap<>();
-        treeMap.put("token", token);
-        treeMap.put("timestamp", "0");
-
-        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_PROJECT_LIST, treeMap);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap, Schedulers.io());
     }
 
     /**
      * 4.5 获取上传凭证
      */
-    public static Observable<UploadAuthResponse> applyUploadAuth(String token) {
+    public static UploadAuthResponse applyUploadAuth(String token) {
         final TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("token", token);
 
-        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_GET_UPLOAD_AUTH, treeMap, true);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_GET_UPLOAD_AUTH, treeMap);
     }
 
     /**
@@ -62,6 +50,6 @@ public class HttpService {
         TreeMap<String, File> fileMap = new TreeMap<>();
         fileMap.put("userfile", file);
 
-        return HttpManager.getInstance().upload(Constants.HOST + HttpServiceRest.URL_UPLOAD_IMAGE, fileMap, treeMap, true);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_UPLOAD_IMAGE, treeMap, fileMap, Schedulers.io());
     }
 }

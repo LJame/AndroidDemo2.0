@@ -1,25 +1,16 @@
 package com.hardrubic.activity;
 
 import ad2.hardrubic.com.androiddemo20.R;
-
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-
 import com.hardrubic.Constants;
-import com.hardrubic.entity.db.Project;
-import com.hardrubic.entity.db.Team;
 import com.hardrubic.entity.response.LoginResponse;
-import com.hardrubic.entity.response.ProjectListResponse;
 import com.hardrubic.entity.response.UploadAuthResponse;
 import com.hardrubic.entity.response.UploadPhotoResponse;
 import com.hardrubic.util.LogUtils;
@@ -38,10 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action0;
 import rx.functions.Action1;
@@ -122,10 +111,11 @@ public class NetworkActivity extends TitleActivity {
             infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/11e7b19623e41fd198500610403b64f1..jpg", path));
             infoList.add(new HttpDownloadInfo("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path));
         }
+        http://14.215.93.23/apk.r1.market.hiapk.com/data/upload/apkres/2016/3_1/11/com.ilovephone.dxzs.baidu_112704.apk
         */
 
         for (int i = 0; i < num; i++) {
-            HttpService.applyDownloadPhoto("http://14.215.93.23/apk.r1.market.hiapk.com/data/upload/apkres/2016/3_1/11/com.ilovephone.dxzs.baidu_112704.apk", path, executorService)
+            HttpService.applyDownloadPhoto("http://7xrnwo.com2.z0.glb.qiniucdn.com/pictures/4ceb013c7ceec05842a58617d77a7030..jpg", path, executorService)
                     .subscribe(new DownloadProgressSubscriber(mContext, new SubscriberOnNextListener<HttpDownloadResult>() {
                         @Override
                         public void onNext(HttpDownloadResult result) {
@@ -159,18 +149,13 @@ public class NetworkActivity extends TitleActivity {
             @Override
             public void run() {
                 //获取上传凭证
-                HttpService.applyUploadAuth(token).subscribe(new Action1<UploadAuthResponse>() {
-                    @Override
-                    public void call(UploadAuthResponse response) {
-                        auth = response.getUpload_auth();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable e) {
-                        e.printStackTrace();
-                        msg = e.getMessage();
-                    }
-                });
+                try {
+                    UploadAuthResponse response = HttpService.applyUploadAuth(token);
+                    auth = response.getUpload_auth();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    msg = e.getMessage();
+                }
 
                 //上传图片
                 if (!TextUtils.isEmpty(auth)) {
@@ -178,45 +163,19 @@ public class NetworkActivity extends TitleActivity {
                         @Override
                         public void call(UploadPhotoResponse response) {
                             msg = "上传文件成功";
+                            ToastUtil.longShow(mContext, msg);
                         }
                     }, new Action1<Throwable>() {
                         @Override
                         public void call(Throwable e) {
                             e.printStackTrace();
                             msg = e.getMessage();
+                            ToastUtil.longShow(mContext, msg);
                         }
                     });
                 }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ToastUtil.longShow(mContext, msg);
-                    }
-                });
             }
         }).start();
-    }
-
-    /**
-     * project列表
-     */
-    private void pullProjectList() {
-        HttpService.applyProjectList(token).subscribe(new Action1<ProjectListResponse>() {
-            @Override
-            public void call(ProjectListResponse response) {
-                List<Project> projectList = response.getProjects();
-                List<Team> teamList = response.getTeams();
-                int projectSize = projectList == null ? 0 : projectList.size();
-                int teamSize = teamList == null ? 0 : teamList.size();
-                LogUtils.d("同步项目成功，数量：projectList_" + projectSize + " teamList_" + teamSize);
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                throwable.printStackTrace();
-                ToastUtil.longShow(mContext, throwable.getMessage());
-            }
-        });
     }
 
     /**
@@ -230,8 +189,6 @@ public class NetworkActivity extends TitleActivity {
         }
 
         //LogUtils.d("主线程:" + Thread.currentThread().getId());
-
-        //pullProjectList();
 
         createData();
     }
