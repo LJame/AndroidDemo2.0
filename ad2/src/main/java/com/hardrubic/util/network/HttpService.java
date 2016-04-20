@@ -25,7 +25,7 @@ public class HttpService {
         TreeMap<String, String> treeMap = new TreeMap<>();
         treeMap.put("username", username);
         treeMap.put("password", password);
-        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap, false);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_LOGIN_IN, treeMap);
     }
 
     /**
@@ -36,7 +36,7 @@ public class HttpService {
         treeMap.put("token", token);
         treeMap.put("timestamp", "0");
 
-        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_PROJECT_LIST, treeMap, false);
+        return HttpManager.getInstance().send(Constants.HOST + HttpServiceRest.URL_PROJECT_LIST, treeMap);
     }
 
     /**

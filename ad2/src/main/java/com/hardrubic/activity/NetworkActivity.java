@@ -31,7 +31,8 @@ import com.hardrubic.util.network.HttpService;
 import com.hardrubic.util.network.PreferencesUtils;
 import com.hardrubic.util.network.SubscriberOnNextListener;
 import com.hardrubic.util.network.SyncExecutorServiceUtil;
-
+import com.hardrubic.util.network.action.FailAction;
+import com.hardrubic.util.network.action.SuccessAction;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +85,7 @@ public class NetworkActivity extends TitleActivity {
         String username = "htwy";
         String password = "haitou123";
 
-        HttpService.applyLoginIn(username, password).subscribe(new Action1<LoginResponse>() {
+        HttpService.applyLoginIn(username, password).subscribe(new SuccessAction<LoginResponse>() {
             @Override
             public void call(LoginResponse response) {
                 token = response.getToken();
@@ -93,7 +94,7 @@ public class NetworkActivity extends TitleActivity {
                 PreferencesUtils.getInstance().putString("token", token);
                 ToastUtil.longShow(mContext, "登陆成功");
             }
-        }, new Action1<Throwable>() {
+        }, new FailAction<Throwable>() {
             @Override
             public void call(Throwable throwable) {
                 throwable.printStackTrace();

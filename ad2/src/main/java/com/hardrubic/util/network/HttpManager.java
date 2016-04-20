@@ -25,6 +25,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
 import rx.Scheduler;
@@ -73,7 +74,7 @@ public class HttpManager {
                 .baseUrl(Constants.HOST)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(okHttpClient)
-                //.addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .build();
         service = retrofit.create(HttpServiceRest.class);
     }
