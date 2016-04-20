@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ad2.hardrubic.com.androiddemo20">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -14,44 +14,33 @@
         android:theme="@style/AppTheme">
         <activity android:name="com.hardrubic.activity.MainActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.hardrubic.activity.ScrollActivity">
-        </activity>
-        <activity android:name="com.hardrubic.activity.HorizontalScrollActivity">
-        </activity>
+        <activity android:name="com.hardrubic.activity.ScrollActivity"></activity>
+        <activity android:name="com.hardrubic.activity.HorizontalScrollActivity"></activity>
 
         <service
             android:name="com.hardrubic.remote.service.RemoteService"
-            android:process=":remote"/>
+            android:process=":remote" />
 
         <activity
             android:name="com.hardrubic.activity.AidlActivity"
-            android:theme="@style/AppTheme">
-        </activity>
-        <activity android:name="com.hardrubic.activity.RecyclerViewActivity">
-        </activity>
+            android:theme="@style/AppTheme"></activity>
+        <activity android:name="com.hardrubic.activity.RecyclerViewActivity"></activity>
         <activity
             android:name="com.hardrubic.activity.CustomViewActivity"
-            android:theme="@style/AppTheme">
-        </activity>
-        <activity android:name="com.hardrubic.activity.CustomViewGroupActivity">
-        </activity>
-        <activity android:name="com.hardrubic.activity.ListViewSwipeActivity">
-        </activity>
-        <activity android:name="com.hardrubic.activity.ExpandableListViewSwipeActivity">
-        </activity>
-        <activity android:name="com.hardrubic.activity.JsTestActivity">
-        </activity>
-        <activity android:name="com.hardrubic.activity.NdkActivity">
-        </activity>
-        <activity android:name="com.hardrubic.activity.HideDialogActivity">
-        </activity>
-        <activity android:name="com.hardrubic.activity.NetworkActivity">
-        </activity>
+            android:theme="@style/AppTheme"></activity>
+        <activity android:name="com.hardrubic.activity.CustomViewGroupActivity"></activity>
+        <activity android:name="com.hardrubic.activity.ListViewSwipeActivity"></activity>
+        <activity android:name="com.hardrubic.activity.ExpandableListViewSwipeActivity"></activity>
+        <activity android:name="com.hardrubic.activity.JsTestActivity"></activity>
+        <activity android:name="com.hardrubic.activity.NdkActivity"></activity>
+        <activity android:name="com.hardrubic.activity.HideDialogActivity"></activity>
+        <activity android:name="com.hardrubic.activity.NetworkActivity"></activity>
+        <activity android:name="com.hardrubic.activity.RxJavaActivity"></activity>
     </application>
 
 </manifest>

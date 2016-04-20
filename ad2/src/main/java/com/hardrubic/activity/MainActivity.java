@@ -12,6 +12,8 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
 
     @Bind(R.id.tv_network)
     TextView tv_network;
+    @Bind(R.id.tv_rxjava)
+    TextView tv_rxjava;
     @Bind(R.id.tv_three_scroll)
     TextView tv_three_scroll;
     @Bind(R.id.tv_horizontal_scroll)
@@ -58,6 +60,7 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         tv_ndk.setOnClickListener(this);
         tv_hide_dialog.setOnClickListener(this);
         tv_network.setOnClickListener(this);
+        tv_rxjava.setOnClickListener(this);
     }
 
     @Override
@@ -66,6 +69,9 @@ public class MainActivity extends TitleActivity implements View.OnClickListener 
         switch (v.getId()) {
             case R.id.tv_network:
                 intent = new Intent(this, NetworkActivity.class);
+                break;
+            case R.id.tv_rxjava:
+                intent = new Intent(this, RxJavaActivity.class);
                 break;
             case R.id.tv_three_scroll:
                 intent = new Intent(this, ScrollActivity.class);
