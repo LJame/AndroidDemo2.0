@@ -1,4 +1,4 @@
-package com.hardrubic.concurrent;
+package com.hardrubic.concurrent.interrupt;
 
 /**
  * 线程中断例子
@@ -7,7 +7,8 @@ public class InterruptedExample {
 
     /**
      * 1、调用interrupt并不意味着立即停止目标线程，只是传递了请求中断；
-     * 2、只有实现了线程中断策略的代码才可以屏蔽中断，否则要保持中断状态
+     * 2、只有实现了线程中断策略的代码才可以屏蔽中断，否则要保持中断状态；
+     * 3、每个线程拥有各自的中断策略，除非知道中断对线程的含义，否则不应该中断这个线程
      */
 
     public static void main(String[] args) throws Exception {
