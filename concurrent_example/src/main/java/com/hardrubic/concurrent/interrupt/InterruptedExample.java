@@ -22,14 +22,7 @@ public class InterruptedExample {
 
         try {
             Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        myThread.cancel();
-
-        try {
-            Thread.sleep(3000);
+            myThread.cancel();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
